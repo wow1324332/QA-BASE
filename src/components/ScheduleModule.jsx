@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, X, CalendarDays, Filter, LayoutDashboard, Calendar, List, Kanban, ChevronLeft, ChevronRight, User, LogOut, Power } from 'lucide-react';
+import { 
+  Plus, X, CalendarDays, Filter, LayoutDashboard, 
+  Calendar, List, Kanban, ChevronLeft, ChevronRight, 
+  User, LogOut, Power 
+} from 'lucide-react';
 import { collection, onSnapshot, doc, writeBatch, updateDoc, addDoc, deleteDoc } from "firebase/firestore";
 import { db } from '../firebaseConfig';
 import { AppLogo, CustomSelect, CustomDatePicker } from './SharedUI';
@@ -29,9 +33,13 @@ const ProjectModal = ({ isOpen, onClose, formData, setFormData, onSubmit, isView
                 <CustomDatePicker disabled={isViewer} value={formData.endDate} onChange={val=>setFormData({...formData, endDate: val})} alignRight />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4 relative z-40">
+            
+            <div className="grid grid-cols-2 gap-4 relative z-40">
               <div><label className="text-xs font-medium text-gray-500 mb-1 block">담당자</label><input required disabled={isViewer} value={formData.assignee} onChange={e=>setFormData({...formData, assignee: e.target.value})} className="w-full bg-gray-50 border border-gray-200 text-sm rounded-lg px-3 py-2 outline-none focus:border-gray-400 shadow-sm disabled:bg-gray-100 disabled:text-gray-500" /></div>
               <div><label className="text-xs font-medium text-gray-500 mb-1 block">유관부서</label><input required disabled={isViewer} value={formData.department} onChange={e=>setFormData({...formData, department: e.target.value})} className="w-full bg-gray-50 border border-gray-200 text-sm rounded-lg px-3 py-2 outline-none focus:border-gray-400 shadow-sm disabled:bg-gray-100 disabled:text-gray-500" /></div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 relative z-30">
               <div>
                 <label className="text-xs font-medium text-gray-500 mb-1 block">상태</label>
                 {isViewer ? (
@@ -40,6 +48,18 @@ const ProjectModal = ({ isOpen, onClose, formData, setFormData, onSubmit, isView
                   <CustomSelect 
                     value={formData.status} onChange={val=>setFormData({...formData, status: val})} 
                     options={[{value:'예정', label:'예정'}, {value:'진행중', label:'진행중'}, {value:'HOLD', label:'HOLD'}, {value:'완료', label:'완료'}]}
+                    className="w-full bg-gray-50 border border-gray-200 text-sm rounded-lg px-3 py-2 shadow-sm"
+                  />
+                )}
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">진행 단계</label>
+                {isViewer ? (
+                  <div className="w-full bg-gray-100 border border-gray-200 text-sm rounded-lg px-3 py-2 text-gray-500 truncate" title={formData.progressStage || '없음'}>{formData.progressStage || '없음'}</div>
+                ) : (
+                  <CustomSelect 
+                    value={formData.progressStage || '없음'} onChange={val=>setFormData({...formData, progressStage: val})} 
+                    options={[{value:'없음', label:'없음'}, {value:'분석 중', label:'분석 중'}, {value:'설계 중', label:'설계 중'}, {value:'대기 중', label:'대기 중'}, {value:'검증 중', label:'검증 중'}, {value:'완료 됨', label:'완료 됨'}]}
                     className="w-full bg-gray-50 border border-gray-200 text-sm rounded-lg px-3 py-2 shadow-sm"
                   />
                 )}
@@ -206,6 +226,8 @@ const ScheduleCalendar = ({ schedules, onShowDetails, user, onUpdateEndDate, onU
                     dayProjects.push(proj || null);
                   }
 
+                  const columns = showWeekend ? 7 : 5;
+
                   return (
                     <div 
                       key={dateStr} 
@@ -325,6 +347,11 @@ const ScheduleCalendar = ({ schedules, onShowDetails, user, onUpdateEndDate, onU
                                   {s.assignee && (
                                     <span className="ml-1.5 px-[5px] h-[15px] bg-white/25 text-white rounded flex items-center justify-center text-[9px] font-bold tracking-wider shrink-0 shadow-sm border border-white/20 drop-shadow-md">
                                       {s.assignee}
+                                    </span>
+                                  )}
+                                  {s.progressStage && s.progressStage !== '없음' && s.progressStage !== '완료 됨' && (
+                                    <span className="ml-1.5 text-[9px] font-medium text-white/90 italic animate-pulse whitespace-nowrap tracking-wide shrink-0">
+                                      {s.progressStage}...
                                     </span>
                                   )}
                                 </span>
@@ -457,6 +484,7 @@ const ProjectList = ({ projects, onShowDetails }) => {
         <thead>
           <tr className="bg-gray-100/80 border-b border-gray-200">
             <th className="px-6 py-4 text-xs font-semibold text-gray-600 tracking-wider w-24">상태</th>
+            <th className="px-6 py-4 text-xs font-semibold text-gray-600 tracking-wider">진행 단계</th>
             <th className="px-6 py-4 text-xs font-semibold text-gray-600 tracking-wider">프로젝트명</th>
             <th className="px-6 py-4 text-xs font-semibold text-gray-600 tracking-wider">기간</th>
             <th className="px-6 py-4 text-xs font-semibold text-gray-600 tracking-wider">담당자</th>
@@ -469,6 +497,7 @@ const ProjectList = ({ projects, onShowDetails }) => {
             return (
             <tr key={project.id} onClick={() => onShowDetails(project)} className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer group">
               <td className="px-6 py-4"><span className={`text-xs px-2.5 py-1 rounded-full font-bold shadow-sm border whitespace-nowrap ${colorMap[project.status]}`}>{project.status}</span></td>
+              <td className="px-6 py-4 text-sm font-medium text-gray-600 whitespace-nowrap">{project.progressStage || '없음'}</td>
               <td className="px-6 py-4 text-sm font-bold text-gray-800"><div className="truncate max-w-[280px]" title={project.name}>{project.name}</div></td>
               <td className="px-6 py-4 text-sm font-medium text-gray-600 whitespace-nowrap">{project.startDate} ~ {project.endDate}</td>
               <td className="px-6 py-4 text-sm font-medium text-gray-600"><div className="truncate max-w-[150px]" title={project.assignee}>{project.assignee}</div></td>
@@ -488,7 +517,7 @@ export const ScheduleDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   
   const [showModal, setShowModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [formData, setFormData] = useState({ name: '', startDate: '', endDate: '', assignee: '', department: '', description: '', status: '예정', color: 'bg-blue-500' });
+  const [formData, setFormData] = useState({ name: '', startDate: '', endDate: '', assignee: '', department: '', description: '', status: '예정', color: 'bg-blue-500', progressStage: '없음' });
 
   const [filterStatus, setFilterStatus] = useState('All');
   const [filterAssignee, setFilterAssignee] = useState('');
@@ -553,20 +582,20 @@ export const ScheduleDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
 
   const openAddModal = () => {
     setIsEditMode(false);
-    setFormData({ name: '', startDate: '', endDate: '', assignee: '', department: '', description: '', status: '예정', color: 'bg-blue-500' });
+    setFormData({ name: '', startDate: '', endDate: '', assignee: '', department: '', description: '', status: '예정', color: 'bg-blue-500', progressStage: '없음' });
     setShowModal(true);
   };
 
   const openEditModal = (project) => {
     setIsEditMode(true);
-    setFormData({...project});
+    setFormData({ progressStage: '없음', ...project });
     setShowModal(true);
   };
 
   const handleCellClick = (dateStr) => {
     if (user.role === 'viewer') return;
     setIsEditMode(false);
-    setFormData({ name: '', startDate: dateStr, endDate: dateStr, assignee: '', department: '', description: '', status: '예정', color: 'bg-blue-500' });
+    setFormData({ name: '', startDate: dateStr, endDate: dateStr, assignee: '', department: '', description: '', status: '예정', color: 'bg-blue-500', progressStage: '없음' });
     setShowModal(true);
   };
 
