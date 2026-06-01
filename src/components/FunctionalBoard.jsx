@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, Settings, User, LogOut, Server, Calendar } from 'lucide-react';
+import { Users, Settings, User, LogOut, Server, Calendar, Bug } from 'lucide-react';
 import { AppLogo } from './SharedUI';
 
 export const FunctionalBoard = ({ user, onNavigate, onLogout, onShowProfileModal, onShowAdminModal }) => {
@@ -21,7 +21,7 @@ export const FunctionalBoard = ({ user, onNavigate, onLogout, onShowProfileModal
             <span className="text-xs font-medium text-gray-700">{onlineUsersCount}명 접속중</span>
           </div>
 
-          {user.role === 'admin' && (
+          {user?.role === 'admin' && (
             <button 
               onClick={onShowAdminModal}
               className="p-2 text-gray-400 hover:text-gray-800 transition-colors hover-breath rounded-full bg-white shadow-sm border border-gray-100"
@@ -36,9 +36,9 @@ export const FunctionalBoard = ({ user, onNavigate, onLogout, onShowProfileModal
               onClick={() => setShowProfileMenu(!showProfileMenu)}
             >
               <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-white text-xs font-medium overflow-hidden">
-                {user.profileImage ? <img src={user.profileImage} alt="profile" className="w-full h-full object-cover" /> : user.name.charAt(0)}
+                {user?.profileImage ? <img src={user.profileImage} alt="profile" className="w-full h-full object-cover" /> : user?.name?.charAt(0) || 'U'}
               </div>
-              <span className="text-sm font-medium text-gray-700">{user.name}</span>
+              <span className="text-sm font-medium text-gray-700">{user?.name || 'User'}</span>
             </div>
 
             {showProfileMenu && (
@@ -91,6 +91,21 @@ export const FunctionalBoard = ({ user, onNavigate, onLogout, onShowProfileModal
               <h3 className="text-xl font-medium text-gray-800 mb-2">Schedule</h3>
               <p className="text-sm text-gray-500 leading-relaxed">
                 프로젝트별 QA 일정을 캘린더로 확인하고<br/>칸반 보드로 진행 현황을 관리합니다.
+              </p>
+            </div>
+
+            <div 
+              onClick={() => onNavigate('projects')}
+              className="bg-white rounded-3xl p-8 cursor-pointer border border-gray-200 shadow-md hover-breath group"
+            >
+              <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition-colors duration-500 shadow-sm border border-gray-100">
+                <Bug className="w-6 h-6 text-gray-600 group-hover:text-white transition-colors duration-500" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-xl font-medium text-gray-800 mb-2 flex items-center">
+                Projects <span className="ml-2 text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-bold">JIRA</span>
+              </h3>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                JIRA 스페이스와 에픽을 연동하여<br/>개발결함(버그) 추적 및 통계를 관리합니다.
               </p>
             </div>
           </div>
