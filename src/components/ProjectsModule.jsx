@@ -96,6 +96,25 @@ const JiraBadge = ({ children, className }) => (
   </span>
 );
 
+// 검색어 하이라이트를 위한 컴포넌트 추가
+const HighlightText = ({ text, highlight }) => {
+  if (!highlight || !highlight.trim() || !text) return <>{text}</>;
+  const escapedHighlight = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`(${escapedHighlight})`, 'gi');
+  const parts = String(text).split(regex);
+  return (
+    <>
+      {parts.map((part, i) => 
+        part.toLowerCase() === highlight.toLowerCase() ? (
+          <span key={i} className="bg-yellow-200 text-gray-900 px-0.5 rounded-sm">{part}</span>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </>
+  );
+};
+
 const SpaceModal = ({ isOpen, onClose, formData, setFormData, onSubmit, isEdit, onDelete }) => {
   if (!isOpen) return null;
   return (
@@ -210,17 +229,16 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
     };
   }, []);
 
-  // [수정] 데이터 페치 중 이전 잔상 제거 및 로딩 시네마틱 뷰 구현
   useEffect(() => {
     if (view === 'issues' && activeEpic) {
       const fetchJiraIssues = async () => {
-        setIssues([]); // JIRA 호출 전 이전 데이터를 즉시 초기화하여 잔상 제거
+        setIssues([]); 
         setLoading(true);
         try {
           const res = await fetch(`/api/jira?epicKey=${activeEpic}`);
           const data = await res.json();
           if (res.ok) {
-            setIssues(data.issues || data); // 서버 응답 구조에 대응 (data.issues 또는 data 자체)
+            setIssues(data.issues || data); 
             setJiraDomain(data.domain || ''); 
           } else { 
             console.error("JIRA API 에러:", data.error); 
@@ -237,7 +255,6 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
     }
   }, [view, activeEpic]);
 
-  // [추가] 이슈 데이터가 로드/변경될 때마다 해당 에픽의 완료율(progress)을 계산하여 Firebase에 자동 업데이트
   useEffect(() => {
     if (view === 'issues' && activeEpic && !loading && issues.length > 0) {
       const total = issues.length;
@@ -245,7 +262,6 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
       const calcProgress = Math.round((resolved / total) * 100);
 
       const currentEpic = epics.find(e => e.epicKey === activeEpic);
-      // 기존 진행률과 다를 때만 파이어베이스 업데이트 수행 (무한루프 방지)
       if (currentEpic && currentEpic.progress !== calcProgress) {
         updateDoc(doc(db, 'jira_epics', currentEpic.id), { progress: calcProgress })
           .catch(err => console.error("Error updating epic progress:", err));
@@ -315,7 +331,6 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   const resolvedIssues = issues.filter(i => i.status.includes('완료') || i.status.includes('Closed')).length;
   const progressPercent = totalIssues === 0 ? 0 : Math.round((resolvedIssues / totalIssues) * 100);
 
-  // 로딩 시에는 헤더의 진행률 바가 0%로 추락하지 않고 Firebase의 기존 완료율을 유지하도록 부드럽게 연결
   const currentEpicData = epics.find(e => e.epicKey === activeEpic);
   const displayProgress = loading ? (currentEpicData?.progress || 0) : progressPercent;
 
@@ -372,7 +387,7 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
         className="fixed z-[99999] px-4 py-3 bg-gray-900/95 backdrop-blur-sm text-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.2)] pointer-events-none animate-fast-fade border border-gray-700/50 max-w-sm"
         style={{ left: x, top: y }}
       >
-        <p className="text-xs font-medium leading-relaxed whitespace-pre-wrap">{tooltipInfo.text}</p>
+        <p className="text-xs font-medium leading-relaxed whitespace-pre-wrap"><HighlightText text={tooltipInfo.text} highlight={searchSummary} /></p>
       </div>,
       document.body
     );
@@ -477,7 +492,6 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
                       <span className="text-xs font-bold text-gray-400">{epic.epicKey}</span>
                     </div>
                     <h3 className="text-lg font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors truncate" title={epic.name}>{epic.name}</h3>
-                    {/* [수정] Firebase에 업데이트된 최신 진행률 표시 */}
                     <div className="w-full bg-gray-100 rounded-full h-1.5 mb-2 mt-4"><div className="bg-blue-500 h-1.5 rounded-full transition-all duration-1000" style={{width: `${epic.progress || 0}%`}}></div></div>
                     <div className="flex justify-between text-xs font-medium text-gray-500">
                       <span>결함 추적 중</span><span>{epic.progress || 0}% 완료</span>
@@ -501,7 +515,6 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-64 bg-white rounded-full h-2 shadow-inner border border-gray-100 overflow-hidden relative">
-                      {/* [수정] 로딩 중에도 기존 Firebase의 에픽 완료율을 유지하여 바가 0으로 떨어지는 현상 방지 */}
                       <div className="bg-green-500 h-full rounded-full transition-all duration-1000" style={{ width: `${displayProgress}%` }}></div>
                     </div>
                     <span className="text-xs font-bold text-gray-500">QA 완료율 {displayProgress}%</span>
@@ -517,7 +530,6 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
               </div>
 
               {loading ? (
-                /* [새로운 기능] 지루하고 어색한 이전 데이터를 덮어버리는 시네마틱 로딩 뷰 적용 */
                 <div className="flex-1 bg-white rounded-2xl border border-gray-200 shadow-md flex flex-col items-center justify-center animate-fade-in relative overflow-hidden">
                   <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-50/50 via-white to-white opacity-60"></div>
                   <div className="relative z-10 flex flex-col items-center">
@@ -559,9 +571,14 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
                     <div className="w-px h-4 bg-gray-200 mx-1"></div>
                     <CustomSelect value={filterPriority} onChange={setFilterPriority} options={priorityOptions} className="bg-transparent text-xs font-medium text-gray-700 outline-none w-32 hover:bg-gray-50 rounded-md transition-colors" />
                     <div className="w-px h-4 bg-gray-200 mx-1"></div>
-                    <div className="flex items-center bg-gray-50 border border-gray-200 rounded-md px-3 py-1.5 transition-colors focus-within:border-gray-400">
+                    <div className="flex items-center bg-gray-50 border border-gray-200 rounded-md px-3 py-1.5 transition-colors focus-within:border-gray-400 relative">
                       <Search className="w-3.5 h-3.5 text-gray-400 mr-2" />
-                      <input type="text" placeholder="요약 검색..." value={searchSummary} onChange={e=>setSearchSummary(e.target.value)} className="text-xs bg-transparent outline-none w-48 placeholder:text-gray-400 text-gray-700" />
+                      <input type="text" placeholder="요약 검색..." value={searchSummary} onChange={e=>setSearchSummary(e.target.value)} className="text-xs bg-transparent outline-none w-48 placeholder:text-gray-400 text-gray-700 pr-6" />
+                      {searchSummary && (
+                        <button onClick={() => setSearchSummary('')} className="absolute right-2 p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full transition-colors flex items-center justify-center">
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
                     </div>
                     {(filterStatus !== 'All' || filterPlatform !== 'All' || filterPriority !== 'All' || searchSummary) && (
                       <button onClick={() => { setFilterStatus('All'); setFilterPlatform('All'); setFilterPriority('All'); setSearchSummary(''); }} className="text-[10px] text-gray-500 hover:text-gray-800 underline ml-2 font-medium">초기화</button>
@@ -609,7 +626,7 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
                                   onMouseMove={(e) => handleTooltip(e, issue.summary)}
                                   onMouseLeave={() => setTooltipInfo({ visible: false, x: 0, y: 0, text: '' })}
                                 >
-                                  <div className="truncate-summary truncate max-w-[200px] xl:max-w-sm">{issue.summary}</div>
+                                  <div className="truncate-summary truncate max-w-[200px] xl:max-w-sm"><HighlightText text={issue.summary} highlight={searchSummary} /></div>
                                 </td>
                                 <td className="px-5 py-4">
                                   <span className={`text-[10px] px-1.5 py-0.5 rounded border font-bold ${issue.platform === 'iOS' ? 'bg-gray-100 text-gray-700 border-gray-200' : issue.platform === 'Android' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-orange-50 text-orange-600 border-orange-200'}`}>{issue.component}</span>
