@@ -1,5 +1,7 @@
 export default async function handler(req, res) {
-  const { epicKey } = req.query;
+  // [수정] 프론트엔드에서 넘어온 issueType을 받습니다. (기본값: 개발결함)
+  const { epicKey, issueType } = req.query;
+  const targetIssueType = issueType || '개발결함';
   
   if (!epicKey) {
     return res.status(400).json({ error: '에픽 키가 필요합니다.' });
@@ -52,7 +54,9 @@ export default async function handler(req, res) {
 
     const searchKeys = [epicKey, ...parentKeys];
     const searchKeysString = searchKeys.map(k => `"${k}"`).join(',');
-    const jql = `parent in (${searchKeysString}) AND issuetype = "개발결함" ORDER BY created DESC`;
+    
+    // [수정] 하드코딩된 '개발결함' 대신 선택된 스페이스의 targetIssueType을 넣습니다.
+    const jql = `parent in (${searchKeysString}) AND issuetype = "${targetIssueType}" ORDER BY created DESC`;
     
     let allIssues = [];
     let nextPageToken = null;
@@ -62,8 +66,8 @@ export default async function handler(req, res) {
       const payload = {
         jql: jql,
         maxResults: 100, 
-        // [수정] description (설명) 항목 추가
-        fields: ["summary", "components", "priority", "issuetype", "status", "reporter", "assignee", "created", "customfield_10694", "description"]
+        // [수정] 커스텀 필드 번호 10655로 정확히 변경
+        fields: ["summary", "components", "priority", "issuetype", "status", "reporter", "assignee", "created", "customfield_10694", "description", "customfield_10655"]
       };
       
       if (nextPageToken) payload.nextPageToken = nextPageToken; 
@@ -86,6 +90,41 @@ export default async function handler(req, res) {
       }
     }
 
+    // [수정] JIRA ADF 뿐만 아니라 단순 텍스트, 객체(value), 배열 등 모든 데이터 형태를 에러 없이 파싱하는 만능 함수로 업그레이드
+    const extractTextFromADF = (field) => {
+      if (field === null || field === undefined) return '';
+      if (typeof field === 'string') return field;
+      if (typeof field === 'number') return String(field);
+
+      if (field.type === 'doc' || Array.isArray(field.content)) {
+        const parseNode = (node) => {
+          if (!node) return '';
+          if (typeof node === 'string') return node;
+          if (node.text) return node.text;
+          if (node.content && Array.isArray(node.content)) {
+            const isBlock = ['paragraph', 'listItem', 'heading'].includes(node.type);
+            const childText = node.content.map(parseNode).join('');
+            return isBlock ? childText + '\n' : childText;
+          }
+          return '';
+        };
+        return parseNode(field);
+      }
+
+      // 커스텀 필드가 { value: "..." } 형태의 객체인 경우 처리
+      if (field.value !== undefined) return String(field.value);
+      
+      // 다중 선택 필드 등의 배열인 경우 처리
+      if (Array.isArray(field)) return field.map(f => extractTextFromADF(f)).join(', ');
+
+      // 알 수 없는 객체일 경우 내용이라도 볼 수 있도록 JSON 문자열 변환
+      try {
+        return JSON.stringify(field);
+      } catch (e) {
+        return '';
+      }
+    };
+
     const formattedIssues = allIssues.map(issue => {
       let phenom = '-';
       const rawPhenom = issue.fields?.customfield_10694;
@@ -94,32 +133,20 @@ export default async function handler(req, res) {
         if (typeof phenom !== 'string') phenom = String(phenom);
       }
 
-      // [수정] 설명(Description) 필드를 문자열로 안전하게 추출
-      let desc = '설명 내용이 없습니다.';
-      if (issue.fields?.description) {
-        if (typeof issue.fields.description === 'string') {
-          desc = issue.fields.description;
-        } else if (issue.fields.description.content) {
-          try {
-            desc = issue.fields.description.content.map(block => {
-              if (block.content) return block.content.map(inline => inline.text || '').join('');
-              return '';
-            }).join('\n');
-          } catch(e) {
-            desc = '설명 형식을 변환할 수 없습니다.';
-          }
-        }
-      }
+      // [수정] 업그레이드된 만능 추출 함수를 적용하여 이슈 내용을 완벽하게 파싱
+      let desc = extractTextFromADF(issue.fields?.description)?.trim() || '설명 내용이 없습니다.';
+      let contentStr = extractTextFromADF(issue.fields?.customfield_10655)?.trim() || '이슈 내용이 없습니다.';
 
       return {
         id: issue.id,
         key: issue.key,
         summary: issue.fields?.summary || '제목 없음',
-        description: desc || '설명 내용이 없습니다.', // [추가] 설명 매핑
+        description: desc,
+        issueContent: contentStr,
         component: issue.fields?.components?.[0]?.name || '전체',
         platform: issue.fields?.components?.[0]?.name || '전체',
         priority: issue.fields?.priority?.name || 'Medium',
-        type: issue.fields?.issuetype?.name || '개발결함',
+        type: issue.fields?.issuetype?.name || targetIssueType,
         phenomenon: phenom,
         status: issue.fields?.status?.name || '진행중',
         reporter: issue.fields?.reporter?.displayName || 'Unknown',
