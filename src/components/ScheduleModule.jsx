@@ -751,7 +751,7 @@ export const ScheduleDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
             <div>
               <div className="flex items-center space-x-3 mb-1">
                 <h1 className="text-2xl font-bold text-gray-800">
-                  {activeMenu === 'calendar' ? 'QA Schedule Calendar' : activeMenu === 'list' ? 'Projects List' : 'Projects Board'}
+                  {activeMenu === 'calendar' ? 'QA Calendar' : activeMenu === 'list' ? 'Projects List' : 'Projects Board'}
                 </h1>
                 {user.role === 'viewer' && <span className="bg-gray-100 text-gray-500 text-[10px] px-2 py-0.5 rounded border border-gray-200 font-semibold uppercase tracking-wider shadow-sm">Read Only</span>}
               </div>
