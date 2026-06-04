@@ -875,9 +875,9 @@ export const DevicesDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
               <div className="flex justify-between items-end mb-6 shrink-0">
                 <div>
                   <div className="flex items-center space-x-3 mb-1">
-                    <h1 className="text-2xl font-bold text-gray-800">USIM 관리 보드</h1>
+                    <h1 className="text-2xl font-bold text-gray-800">USIM Manager</h1>
                   </div>
-                  <p className="text-sm text-gray-500 font-medium">검증 데이터 확보용 USIM 카드 현황을 관리하세요.</p>
+                  <p className="text-sm text-gray-500 font-medium">USIM 카드 현황을 관리하세요.</p>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="bg-white border border-gray-200 rounded-lg p-1.5 flex shadow-sm items-center px-4 space-x-4 h-9">
