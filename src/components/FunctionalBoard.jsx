@@ -106,7 +106,7 @@ export const FunctionalBoard = ({ user, onNavigate, onLogout, onShowProfileModal
               onClick={() => onNavigate('projects')}
               className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 cursor-pointer border border-gray-200 shadow-md hover-breath group"
             >
-              <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition-colors duration-500 shadow-sm border border-gray-100">
+              <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-6 group-hover:bg-gray-800 transition-colors duration-500 shadow-sm border border-gray-100">
                 <Bug className="w-6 h-6 text-gray-600 group-hover:text-white transition-colors duration-500" strokeWidth={1.5} />
               </div>
               <h3 className="text-xl font-medium text-gray-800 mb-2 flex items-center">
