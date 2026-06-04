@@ -737,8 +737,8 @@ export const ScheduleDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
             <button onClick={() => onNavigate('board')} className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors"><LayoutDashboard className="w-4 h-4" /><span className="text-sm font-medium">Functional Board</span></button>
             <div className="h-px bg-gray-100 my-2 mx-3"></div>
             <button onClick={() => setActiveMenu('calendar')} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ${activeMenu === 'calendar' ? 'bg-gray-50 text-gray-900 font-medium border border-gray-200 shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}><CalendarDays className={`w-4 h-4 ${activeMenu === 'calendar' ? 'text-gray-700' : ''}`} /><span className="text-sm">QA Calendar</span></button>
-            <button onClick={() => setActiveMenu('list')} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ${activeMenu === 'list' ? 'bg-gray-50 text-gray-900 font-medium border border-gray-200 shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}><List className={`w-4 h-4 ${activeMenu === 'list' ? 'text-gray-700' : ''}`} /><span className="text-sm">Projects List</span></button>
-            <button onClick={() => setActiveMenu('kanban')} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ${activeMenu === 'kanban' ? 'bg-gray-50 text-gray-900 font-medium border border-gray-200 shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}><Kanban className={`w-4 h-4 ${activeMenu === 'kanban' ? 'text-gray-700' : ''}`} /><span className="text-sm">Projects Board</span></button>
+            <button onClick={() => setActiveMenu('list')} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ${activeMenu === 'list' ? 'bg-gray-50 text-gray-900 font-medium border border-gray-200 shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}><List className={`w-4 h-4 ${activeMenu === 'list' ? 'text-gray-700' : ''}`} /><span className="text-sm">Project List</span></button>
+            <button onClick={() => setActiveMenu('kanban')} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ${activeMenu === 'kanban' ? 'bg-gray-50 text-gray-900 font-medium border border-gray-200 shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}><Kanban className={`w-4 h-4 ${activeMenu === 'kanban' ? 'text-gray-700' : ''}`} /><span className="text-sm">Project Board</span></button>
           </div>
         </aside>
 
@@ -751,7 +751,7 @@ export const ScheduleDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
             <div>
               <div className="flex items-center space-x-3 mb-1">
                 <h1 className="text-2xl font-bold text-gray-800">
-                  {activeMenu === 'calendar' ? 'QA Calendar' : activeMenu === 'list' ? 'Projects List' : 'Projects Board'}
+                  {activeMenu === 'calendar' ? 'QA Calendar' : activeMenu === 'list' ? 'Project List' : 'Project Board'}
                 </h1>
                 {user.role === 'viewer' && <span className="bg-gray-100 text-gray-500 text-[10px] px-2 py-0.5 rounded border border-gray-200 font-semibold uppercase tracking-wider shadow-sm">Read Only</span>}
               </div>
