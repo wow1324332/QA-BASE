@@ -9,12 +9,12 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyATKKSrUm6NKATdZdJeDxhQ5Dj2Q32ujh0",
-  authDomain: "q-base-dev.firebaseapp.com",
-  projectId: "q-base-dev",
-  storageBucket: "q-base-dev.firebasestorage.app",
-  messagingSenderId: "756427289812",
-  appId: "1:756427289812:web:217c6ebb1bfbd1d931f741"
+  apiKey: "AIzaSyBIsBcW0eBceMAJdhGsKmdNew7vvMPbwB4",
+  authDomain: "qa-base-prd.firebaseapp.com",
+  projectId: "qa-base-prd",
+  storageBucket: "qa-base-prd.firebasestorage.app",
+  messagingSenderId: "138324755275",
+  appId: "1:138324755275:web:ead26c4202fad8c0885ece"
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
@@ -465,11 +465,11 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
         <aside className={`bg-white border-r border-gray-100 transition-all duration-300 ease-in-out flex flex-col z-10 overflow-hidden whitespace-nowrap ${sidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full'}`}>
           <div className="p-4 space-y-1 w-64">
             <div className="text-xs font-semibold text-gray-400 tracking-wider mb-4 px-3 mt-2">MENU</div>
-            <button onClick={() => onNavigate('board')} className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors"><LayoutDashboard className="w-4 h-4" /><span className="text-sm font-medium">기능 보드 이동</span></button>
+            <button onClick={() => onNavigate('board')} className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors"><LayoutDashboard className="w-4 h-4" /><span className="text-sm font-medium">Functional Board</span></button>
             <div className="h-px bg-gray-100 my-2 mx-3"></div>
-            <button onClick={() => { setActiveMenu('space'); setView('spaces'); setActiveSpace(null); setActiveEpic(null); }} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ${activeMenu === 'space' ? 'bg-blue-50/50 text-blue-700 font-medium border border-blue-100 shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}><Server className={`w-4 h-4 ${activeMenu === 'space' ? 'text-blue-600' : ''}`} /><span className="text-sm">스페이스 보드</span></button>
+            <button onClick={() => { setActiveMenu('space'); setView('spaces'); setActiveSpace(null); setActiveEpic(null); }} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ${activeMenu === 'space' ? 'bg-blue-50/50 text-blue-700 font-medium border border-blue-100 shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}><Server className={`w-4 h-4 ${activeMenu === 'space' ? 'text-blue-600' : ''}`} /><span className="text-sm">Space Board</span></button>
             {activeSpace && (
-              <button onClick={() => { setActiveMenu('epic'); setView('epics'); }} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ml-2 w-[calc(100%-8px)] ${activeMenu === 'epic' ? 'bg-gray-50 text-gray-900 font-medium border border-gray-200 shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}><Kanban className="w-4 h-4" /><span className="text-sm">프로젝트(에픽) 메인보드</span></button>
+              <button onClick={() => { setActiveMenu('epic'); setView('epics'); }} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ml-2 w-[calc(100%-8px)] ${activeMenu === 'epic' ? 'bg-gray-50 text-gray-900 font-medium border border-gray-200 shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}><Kanban className="w-4 h-4" /><span className="text-sm">Project Board</span></button>
             )}
           </div>
         </aside>
@@ -486,7 +486,7 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
               <div className="flex justify-between items-end mb-8 shrink-0">
                 <div>
                   <div className="flex items-center space-x-3 mb-1">
-                    <h1 className="text-2xl font-bold text-gray-800">JIRA 스페이스 보드</h1>
+                    <h1 className="text-2xl font-bold text-gray-800">Space Board</h1>
                   </div>
                   <p className="text-sm text-gray-500 font-medium">결함을 추적할 스페이스를 선택하거나 새로 생성하세요.</p>
                 </div>
@@ -528,7 +528,7 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
                 <div>
                   <div className="flex items-center space-x-3 mb-1">
                     <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded border border-blue-200">{activeSpace}</span>
-                    <h1 className="text-2xl font-bold text-gray-800">프로젝트(에픽) 보드</h1>
+                    <h1 className="text-2xl font-bold text-gray-800">Project Board</h1>
                   </div>
                   <p className="text-sm text-gray-500 font-medium">추적할 프로젝트(에픽)를 선택하거나 새로 등록하세요.</p>
                 </div>
