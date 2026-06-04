@@ -79,7 +79,7 @@ export const FunctionalBoard = ({ user, onNavigate, onLogout, onShowProfileModal
               <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-6 group-hover:bg-gray-800 transition-colors duration-500 shadow-sm border border-gray-100">
                 <Server className="w-6 h-6 text-gray-600 group-hover:text-white transition-colors duration-500" strokeWidth={1.5} />
               </div>
-              <h3 className="text-xl font-medium text-gray-800 mb-2">Devices&USIM</h3>
+              <h3 className="text-xl font-medium text-gray-800 mb-2">Devices & USIM</h3>
               <p className="text-sm text-gray-500 leading-relaxed">
                 QA 검증용 시료(단말기) 현황을 조회하고<br/>상태 및 대여 현황을 관리합니다.
               </p>
