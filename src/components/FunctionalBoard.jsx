@@ -124,7 +124,7 @@ export const FunctionalBoard = ({ user, onNavigate, onLogout, onShowProfileModal
               <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-6 group-hover:bg-yellow-500 transition-colors duration-500 shadow-sm border border-gray-100">
                 <KeyRound className="w-6 h-6 text-gray-600 group-hover:text-white transition-colors duration-500" strokeWidth={1.5} />
               </div>
-              <h3 className="text-xl font-medium text-gray-800 mb-2">Accounts Vault</h3>
+              <h3 className="text-xl font-medium text-gray-800 mb-2">Accounts</h3>
               <p className="text-sm text-gray-500 leading-relaxed">
                 보안이 유지된 테스트용 공용 계정들을<br/>빠르고 안전하게 관리합니다.
               </p>
