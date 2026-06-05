@@ -424,7 +424,10 @@ export const AccountsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200 shadow-sm hover-breath cursor-default">
-            <div className="w-6 h-6 rounded-full bg-gray-800 flex items-center justify-center text-white text-[10px] font-medium">{user?.name?.charAt(0) || 'U'}</div>
+            {/* [수정됨] 프로필 이미지가 등록되어 있으면 이미지를, 없으면 이니셜을 보여주도록 핀셋 적용 (overflow-hidden 추가) */}
+            <div className="w-6 h-6 rounded-full bg-gray-800 flex items-center justify-center text-white text-[10px] font-medium overflow-hidden">
+              {user?.profileImage ? <img src={user.profileImage} alt="profile" className="w-full h-full object-cover" /> : user?.name?.charAt(0) || 'U'}
+            </div>
             <span className="text-xs font-medium text-gray-700">{user?.name || 'User'}</span>
           </div>
           <div className="h-4 w-px bg-gray-200"></div>
