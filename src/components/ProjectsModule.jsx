@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { 
   Bug, Activity, CheckCircle2, AlertCircle, 
@@ -9,12 +9,12 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyATKKSrUm6NKATdZdJeDxhQ5Dj2Q32ujh0",
-  authDomain: "q-base-dev.firebaseapp.com",
-  projectId: "q-base-dev",
-  storageBucket: "q-base-dev.firebasestorage.app",
-  messagingSenderId: "756427289812",
-  appId: "1:756427289812:web:217c6ebb1bfbd1d931f741"
+  apiKey: "AIzaSyBIsBcW0eBceMAJdhGsKmdNew7vvMPbwB4",
+  authDomain: "qa-base-prd.firebaseapp.com",
+  projectId: "qa-base-prd",
+  storageBucket: "qa-base-prd.firebasestorage.app",
+  messagingSenderId: "138324755275",
+  appId: "1:138324755275:web:ead26c4202fad8c0885ece"
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
@@ -47,12 +47,12 @@ const CustomSelect = ({ value, onChange, options, className }) => {
   );
 };
 
-const DetailedStatCard = ({ title, icon: Icon, total, data, colorMap, defaultColor, isExpanded }) => {
+const DetailedStatCard = ({ title, icon: Icon, total, data, colorMap, defaultColor }) => {
   const entries = Object.entries(data).sort((a,b)=>b[1]-a[1]);
-  const displayEntries = isExpanded ? entries : entries.slice(0, 5);
+  const displayEntries = entries.slice(0, 6);
 
   return (
-    <div className={`bg-white rounded-2xl p-4 border border-gray-200 shadow-md flex flex-col hover-breath transition-all duration-300 relative ${isExpanded ? 'h-auto' : 'h-48'}`}>
+    <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-md flex flex-col hover-breath transition-all duration-300 h-full min-h-[12rem]">
       <div className="flex justify-between items-center mb-3 shrink-0 border-b border-gray-50 pb-2">
         <div className="flex items-center space-x-2">
           <div className="p-1.5 bg-gray-50 rounded-lg border border-gray-100">
@@ -64,7 +64,7 @@ const DetailedStatCard = ({ title, icon: Icon, total, data, colorMap, defaultCol
           <span className="text-[10px] font-bold text-gray-500 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">{total} Issues</span>
         </div>
       </div>
-      <div className="flex flex-col space-y-2 pr-1 overflow-hidden">
+      <div className="flex flex-col space-y-2 pr-1 overflow-visible">
         {displayEntries.map(([label, count]) => {
           const colorClass = colorMap[label] || defaultColor;
           return (
@@ -78,11 +78,6 @@ const DetailedStatCard = ({ title, icon: Icon, total, data, colorMap, defaultCol
           );
         })}
         {entries.length === 0 && <div className="text-xs text-gray-400 text-center py-4">데이터 없음</div>}
-        {!isExpanded && entries.length > 5 && (
-          <div className="text-[10px] text-gray-400 text-center pt-1 animate-fade-in font-medium">
-            + {entries.length - 5}개 항목 더보기
-          </div>
-        )}
       </div>
     </div>
   );
@@ -194,24 +189,6 @@ const EpicModal = ({ isOpen, onClose, formData, setFormData, onSubmit, isEdit, o
   );
 };
 
-// 불필요한 재렌더링 방지를 위해 순수 함수들을 컴포넌트 밖으로 이동
-const getPriorityIcon = (priority) => {
-  switch(priority) {
-    case 'Critical': return <ChevronUp className="w-3 h-3 text-red-600 inline mr-1" strokeWidth={3} />;
-    case 'High': return <ChevronUp className="w-3 h-3 text-orange-500 inline mr-1" strokeWidth={3} />;
-    case 'Medium': return <Equal className="w-3 h-3 text-yellow-500 inline mr-1" strokeWidth={3} />;
-    case 'Low': return <ChevronDownIcon className="w-3 h-3 text-blue-500 inline mr-1" strokeWidth={3} />;
-    default: return null;
-  }
-};
-
-const getStatusBadgeClass = (status) => {
-  if (status.includes('완료') || status === 'Closed') return 'bg-green-50 text-green-600 border-green-200';
-  if (status.includes('REOPEN') || status === '정지') return 'bg-red-50 text-red-600 border-red-200';
-  if (status.includes('진행중') || status.includes('수정중')) return 'bg-blue-50 text-blue-600 border-blue-200';
-  return 'bg-gray-100 text-gray-600 border-gray-200';
-};
-
 export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeMenu, setActiveMenu] = useState('space'); 
@@ -232,7 +209,7 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   const [searchInput, setSearchInput] = useState(''); 
   const [searchSummary, setSearchSummary] = useState(''); 
   
-  const [isStatsExpanded, setIsStatsExpanded] = useState(false);
+  const [isStatsExpanded, setIsStatsExpanded] = useState(true);
 
   const [tooltipInfo, setTooltipInfo] = useState({ visible: false, x: 0, y: 0, text: '' });
   const [selectedIssue, setSelectedIssue] = useState(null);
@@ -317,6 +294,12 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
     }
   }, [issues, activeEpic, loading, epics, isType2]);
 
+  const handleOpenJiraIssue = (issueKey) => {
+    if (jiraDomain && issueKey) {
+      window.open(`https://${jiraDomain}/browse/${issueKey}`, '_blank');
+    }
+  };
+
   const handleSpaceSubmit = async (data) => {
     try {
       const { id, ...saveData } = data;
@@ -381,10 +364,28 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   const currentEpicData = epics.find(e => e.epicKey === activeEpic);
   const displayProgress = loading ? (currentEpicData?.progress || 0) : progressPercent;
 
+  const getPriorityIcon = (priority) => {
+    switch(priority) {
+      case 'Critical': return <ChevronUp className="w-3 h-3 text-red-600 inline mr-1" strokeWidth={3} />;
+      case 'High': return <ChevronUp className="w-3 h-3 text-orange-500 inline mr-1" strokeWidth={3} />;
+      case 'Medium': return <Equal className="w-3 h-3 text-yellow-500 inline mr-1" strokeWidth={3} />;
+      case 'Low': return <ChevronDownIcon className="w-3 h-3 text-blue-500 inline mr-1" strokeWidth={3} />;
+      default: return null;
+    }
+  };
+
+  const getStatusBadgeClass = (status) => {
+    if (status.includes('완료') || status === 'Closed') return 'bg-green-50 text-green-600 border-green-200';
+    if (status.includes('REOPEN') || status === '정지') return 'bg-red-50 text-red-600 border-red-200';
+    if (status.includes('진행중') || status.includes('수정중')) return 'bg-blue-50 text-blue-600 border-blue-200';
+    return 'bg-gray-100 text-gray-600 border-gray-200';
+  };
+
+  // [수정] 보고자(Reporter) 필터가 전역으로 동작하도록 로직 수정
   const filteredIssues = issues.filter(issue => {
     if (filterStatus !== 'All' && issue.status !== filterStatus) return false;
     if (filterPriority !== 'All' && issue.priority !== filterPriority) return false;
-    if (filterReporter !== 'All' && issue.reporter !== filterReporter) return false; 
+    if (filterReporter !== 'All' && issue.reporter !== filterReporter) return false; // 모든 타입에서 동작
     
     if (!isType2) {
       if (filterPlatform !== 'All' && issue.component !== filterPlatform) return false;
@@ -405,130 +406,17 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   const reporterOptions = [{value: 'All', label: '보고자 전체'}, ...Array.from(new Set(issues.map(i => i.reporter))).filter(Boolean).map(p => ({value: p, label: p}))];
   const priorityOptions = [{value: 'All', label: '우선순위 전체'}, ...Array.from(new Set(issues.map(i => i.priority))).filter(Boolean).map(p => ({value: p, label: p}))];
 
-  // ==========================================
-  // [수정 핵심] 사이드 패널 성능 최적화를 위한 useMemo 적용 구역
-  // ==========================================
-  const renderedIssuesList = useMemo(() => {
-    if (loading) {
-      return (
-        <tr>
-          <td colSpan={isType2 ? "6" : "8"} className="px-5 py-10 text-center text-sm text-gray-500 font-medium animate-pulse">
-            JIRA 데이터를 실시간으로 불러오는 중입니다...
-          </td>
-        </tr>
-      );
-    }
-    if (filteredIssues.length === 0) {
-      return (
-        <tr>
-          <td colSpan={isType2 ? "6" : "8"} className="px-5 py-10 text-center text-sm text-gray-500 font-medium">
-            등록/검색된 개발결함 내역이 없습니다.
-          </td>
-        </tr>
-      );
-    }
+  const handleTooltip = (e, text) => {
+    const textSpan = e.currentTarget.querySelector('.truncate-summary');
+    let isTruncated = false;
+    if (textSpan && textSpan.scrollWidth > textSpan.clientWidth) isTruncated = true;
 
-    return filteredIssues.map(issue => (
-      <tr 
-        key={issue.id} 
-        className="hover:bg-blue-50/30 transition-colors group cursor-pointer" 
-        onClick={() => setSelectedIssue(issue)}
-      >
-        {isType2 ? (
-          <>
-            <td className="px-5 py-4">
-              <span 
-                className="text-xs font-bold text-blue-600 hover:underline underline-offset-2 flex items-center cursor-pointer w-max"
-                onClick={(e) => { 
-                  e.stopPropagation(); 
-                  if (jiraDomain && issue.key) window.open(`https://${jiraDomain}/browse/${issue.key}`, '_blank');
-                }}
-              >
-                {issue.key} <ExternalLink className="w-3 h-3 ml-1 text-gray-400 group-hover:text-blue-500 transition-colors" />
-              </span>
-            </td>
-            <td className="px-5 py-4 text-xs text-gray-400 font-medium whitespace-nowrap">{issue.date}</td>
-            <td 
-              className="px-5 py-4 text-sm font-bold text-gray-800"
-              onMouseEnter={(e) => {
-                const textSpan = e.currentTarget.querySelector('.truncate-summary');
-                if (textSpan && textSpan.scrollWidth > textSpan.clientWidth) {
-                  setTooltipInfo({ visible: true, x: e.clientX, y: e.clientY, text: issue.summary });
-                }
-              }}
-              onMouseMove={(e) => {
-                const textSpan = e.currentTarget.querySelector('.truncate-summary');
-                if (textSpan && textSpan.scrollWidth > textSpan.clientWidth) {
-                  setTooltipInfo({ visible: true, x: e.clientX, y: e.clientY, text: issue.summary });
-                }
-              }}
-              onMouseLeave={() => setTooltipInfo({ visible: false, x: 0, y: 0, text: '' })}
-            >
-              <div className="truncate-summary truncate max-w-[200px] xl:max-w-sm"><HighlightText text={issue.summary} highlight={searchSummary} /></div>
-            </td>
-            <td className="px-5 py-4 text-xs font-medium text-gray-700 mt-1">
-              <div className="flex items-center">{getPriorityIcon(issue.priority)} {issue.priority}</div>
-            </td>
-            <td className="px-5 py-4"><JiraBadge className={getStatusBadgeClass(issue.status)}>{issue.status}</JiraBadge></td>
-            <td className="px-5 py-4">
-              <div className="flex flex-col space-y-1">
-                <span className="text-xs font-medium text-gray-700 flex items-center"><User className="w-3 h-3 mr-1 text-gray-400"/> {issue.reporter}</span>
-              </div>
-            </td>
-          </>
-        ) : (
-          <>
-            <td className="px-5 py-4">
-              <span 
-                className="text-xs font-bold text-blue-600 hover:underline underline-offset-2 flex items-center cursor-pointer w-max"
-                onClick={(e) => { 
-                  e.stopPropagation(); 
-                  if (jiraDomain && issue.key) window.open(`https://${jiraDomain}/browse/${issue.key}`, '_blank');
-                }}
-              >
-                {issue.key} <ExternalLink className="w-3 h-3 ml-1 text-gray-400 group-hover:text-blue-500 transition-colors" />
-              </span>
-            </td>
-            <td className="px-5 py-4"><JiraBadge className={getStatusBadgeClass(issue.status)}>{issue.status}</JiraBadge></td>
-            <td className="px-5 py-4 text-xs font-medium text-gray-700 mt-1">
-              <div className="flex items-center">{getPriorityIcon(issue.priority)} {issue.priority}</div>
-            </td>
-            <td className="px-5 py-4">
-              <span className="text-[10px] px-1.5 py-0.5 rounded border bg-purple-50 text-purple-600 border-purple-200 font-bold whitespace-nowrap">{issue.phenomenon || '-'}</span>
-            </td>
-            <td 
-              className="px-5 py-4 text-sm font-bold text-gray-800"
-              onMouseEnter={(e) => {
-                const textSpan = e.currentTarget.querySelector('.truncate-summary');
-                if (textSpan && textSpan.scrollWidth > textSpan.clientWidth) {
-                  setTooltipInfo({ visible: true, x: e.clientX, y: e.clientY, text: issue.summary });
-                }
-              }}
-              onMouseMove={(e) => {
-                const textSpan = e.currentTarget.querySelector('.truncate-summary');
-                if (textSpan && textSpan.scrollWidth > textSpan.clientWidth) {
-                  setTooltipInfo({ visible: true, x: e.clientX, y: e.clientY, text: issue.summary });
-                }
-              }}
-              onMouseLeave={() => setTooltipInfo({ visible: false, x: 0, y: 0, text: '' })}
-            >
-              <div className="truncate-summary truncate max-w-[200px] xl:max-w-sm"><HighlightText text={issue.summary} highlight={searchSummary} /></div>
-            </td>
-            <td className="px-5 py-4">
-              <span className={`text-[10px] px-1.5 py-0.5 rounded border font-bold ${issue.platform === 'iOS' ? 'bg-gray-100 text-gray-700 border-gray-200' : issue.platform === 'Android' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-orange-50 text-orange-600 border-orange-200'}`}>{issue.component}</span>
-            </td>
-            <td className="px-5 py-4">
-              <div className="flex flex-col space-y-1">
-                <span className="text-xs font-medium text-gray-700 flex items-center"><User className="w-3 h-3 mr-1 text-gray-400"/> {issue.assignee}</span>
-              </div>
-            </td>
-            <td className="px-5 py-4 text-xs text-gray-400 font-medium whitespace-nowrap">{issue.date}</td>
-          </>
-        )}
-      </tr>
-    ));
-  }, [loading, filteredIssues, searchSummary, isType2, jiraDomain]);
-  // ==========================================
+    if (isTruncated) {
+      setTooltipInfo({ visible: true, x: e.clientX, y: e.clientY, text: text });
+    } else {
+      setTooltipInfo(prev => prev.visible ? { visible: false, x: 0, y: 0, text: '' } : prev);
+    }
+  };
 
   const renderTooltip = () => {
     if (!tooltipInfo.visible) return null;
@@ -549,6 +437,7 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
     );
   };
 
+  // [수정] 보고자 필터가 항상 리셋 조건에 포함되도록 반영
   const hasFilters = filterStatus !== 'All' || filterPriority !== 'All' || filterReporter !== 'All' || searchInput || (!isType2 && filterPlatform !== 'All');
 
   return (
@@ -560,6 +449,7 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200 shadow-sm hover-breath cursor-default">
+            {/* [수정됨] 프로필 이미지가 등록되어 있으면 이미지를, 없으면 이니셜을 보여주도록 핀셋 적용 (overflow-hidden 추가) */}
             <div className="w-6 h-6 rounded-full bg-gray-800 flex items-center justify-center text-white text-[10px] font-medium overflow-hidden">
               {user?.profileImage ? <img src={user.profileImage} alt="profile" className="w-full h-full object-cover" /> : user?.name?.charAt(0) || 'U'}
             </div>
@@ -573,16 +463,16 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
 
       <div 
         className="flex flex-1 overflow-hidden relative bg-[#f0f2f5] bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/bg-projects.jpg')" }}
+        style={{ backgroundImage: "url('/bg-projects.png')" }}
       >
         <aside className={`bg-white border-r border-gray-100 transition-all duration-300 ease-in-out flex flex-col z-10 overflow-hidden whitespace-nowrap ${sidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full'}`}>
           <div className="p-4 space-y-1 w-64">
             <div className="text-xs font-semibold text-gray-400 tracking-wider mb-4 px-3 mt-2">MENU</div>
-            <button onClick={() => onNavigate('board')} className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors"><LayoutDashboard className="w-4 h-4" /><span className="text-sm font-medium">기능 보드 이동</span></button>
+            <button onClick={() => onNavigate('board')} className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors"><LayoutDashboard className="w-4 h-4" /><span className="text-sm font-medium">Functional Board</span></button>
             <div className="h-px bg-gray-100 my-2 mx-3"></div>
-            <button onClick={() => { setActiveMenu('space'); setView('spaces'); setActiveSpace(null); setActiveEpic(null); }} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ${activeMenu === 'space' ? 'bg-blue-50/50 text-blue-700 font-medium border border-blue-100 shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}><Server className={`w-4 h-4 ${activeMenu === 'space' ? 'text-blue-600' : ''}`} /><span className="text-sm">스페이스 보드</span></button>
+            <button onClick={() => { setActiveMenu('space'); setView('spaces'); setActiveSpace(null); setActiveEpic(null); }} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ${activeMenu === 'space' ? 'bg-blue-50/50 text-blue-700 font-medium border border-blue-100 shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}><Server className={`w-4 h-4 ${activeMenu === 'space' ? 'text-blue-600' : ''}`} /><span className="text-sm">Space Board</span></button>
             {activeSpace && (
-              <button onClick={() => { setActiveMenu('epic'); setView('epics'); }} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ml-2 w-[calc(100%-8px)] ${activeMenu === 'epic' ? 'bg-gray-50 text-gray-900 font-medium border border-gray-200 shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}><Kanban className="w-4 h-4" /><span className="text-sm">프로젝트(에픽) 메인보드</span></button>
+              <button onClick={() => { setActiveMenu('epic'); setView('epics'); }} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ml-2 w-[calc(100%-8px)] ${activeMenu === 'epic' ? 'bg-gray-50 text-gray-900 font-medium border border-gray-200 shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}><Kanban className="w-4 h-4" /><span className="text-sm">Project Board</span></button>
             )}
           </div>
         </aside>
@@ -598,7 +488,7 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
               <div className="flex justify-between items-end mb-8 shrink-0">
                 <div>
                   <div className="flex items-center space-x-3 mb-1">
-                    <h1 className="text-2xl font-bold text-gray-800">JIRA 스페이스 보드</h1>
+                    <h1 className="text-2xl font-bold text-gray-800">Space Board</h1>
                   </div>
                   <p className="text-sm text-gray-500 font-medium">결함을 추적할 스페이스를 선택하거나 새로 생성하세요.</p>
                 </div>
@@ -640,7 +530,7 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
                 <div>
                   <div className="flex items-center space-x-3 mb-1">
                     <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded border border-blue-200">{activeSpace}</span>
-                    <h1 className="text-2xl font-bold text-gray-800">프로젝트(에픽) 보드</h1>
+                    <h1 className="text-2xl font-bold text-gray-800">Project Board</h1>
                   </div>
                   <p className="text-sm text-gray-500 font-medium">추적할 프로젝트(에픽)를 선택하거나 새로 등록하세요.</p>
                 </div>
@@ -701,166 +591,269 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
                 )}
               </div>
 
-              <div className="shrink-0 flex flex-col">
-                <div className={`flex justify-between items-end px-1 ${isStatsExpanded ? 'mb-2' : 'mb-6'} transition-all duration-500`}>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Dashboard Statistics</span>
-                  <button onClick={() => setIsStatsExpanded(!isStatsExpanded)} className="flex items-center justify-center text-gray-500 hover:text-gray-800 transition-colors bg-white p-1.5 rounded-lg shadow-sm border border-gray-200">
-                    {isStatsExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
-                  </button>
-                </div>
-                <div className={`grid transition-all duration-500 ease-in-out ${isStatsExpanded ? 'grid-rows-[1fr] opacity-100 mb-6' : 'grid-rows-[0fr] opacity-0 mb-0'}`}>
-                  <div className="overflow-hidden">
-                    <div className="flex space-x-6 items-stretch pb-1">
-                      <div className="flex-1">
-                        <DetailedStatCard title="상태별 통계" icon={Activity} total={totalIssues} data={statusCounts} colorMap={statusColorMap} defaultColor="bg-blue-400" isExpanded={isStatsExpanded} />
-                      </div>
-                      <div className="flex-1">
-                        {isType2 ? (
-                          <DetailedStatCard title="보고자별 통계" icon={User} total={totalIssues} data={reporterCounts} colorMap={{}} defaultColor="bg-indigo-400" isExpanded={isStatsExpanded} />
-                        ) : (
-                          <DetailedStatCard title="플랫폼별 통계" icon={Server} total={totalIssues} data={platformCounts} colorMap={platformColorMap} defaultColor="bg-purple-400" isExpanded={isStatsExpanded} />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <DetailedStatCard title="우선순위별 통계" icon={AlertCircle} total={totalIssues} data={priorityCounts} colorMap={priorityColorMap} defaultColor="bg-gray-400" isExpanded={isStatsExpanded} />
-                      </div>
+              {loading ? (
+                <div className="flex-1 bg-white rounded-2xl border border-gray-200 shadow-md flex flex-col items-center justify-center animate-fade-in relative overflow-hidden">
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-50/50 via-white to-white opacity-60"></div>
+                  <div className="relative z-10 flex flex-col items-center">
+                    <div className="relative mb-8 flex items-center justify-center w-24 h-24">
+                      <div className="absolute inset-0 border-4 border-gray-100 rounded-full shadow-inner"></div>
+                      <div className="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+                      <Server className="w-8 h-8 text-blue-500 animate-pulse" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-800 mb-3 tracking-tight">JIRA 실시간 동기화 중</h3>
+                    <p className="text-sm text-gray-500 font-medium">해당 프로젝트의 모든 하위 결함 데이터를 불러오고 있습니다...</p>
+                    <div className="w-48 h-1.5 bg-gray-100 rounded-full mt-6 overflow-hidden">
+                      <div className="h-full bg-blue-600 rounded-full w-full origin-left animate-[scaleX_1s_ease-in-out_infinite_alternate]"></div>
                     </div>
                   </div>
                 </div>
-              </div>
-
-              <div className="flex items-center space-x-3 bg-white p-3 px-5 rounded-t-2xl shadow-sm border border-gray-200 border-b-0 shrink-0 relative z-20">
-                <Filter className="w-4 h-4 text-gray-400" />
-                <div className="w-px h-4 bg-gray-200 mx-1"></div>
-                <CustomSelect value={filterStatus} onChange={setFilterStatus} options={statusOptions} className="bg-transparent text-xs font-medium text-gray-700 outline-none w-32 hover:bg-gray-50 rounded-md transition-colors" />
-                <div className="w-px h-4 bg-gray-200 mx-1"></div>
-                {isType2 ? (
-                  <CustomSelect value={filterReporter} onChange={setFilterReporter} options={reporterOptions} className="bg-transparent text-xs font-medium text-gray-700 outline-none w-32 hover:bg-gray-50 rounded-md transition-colors" />
-                ) : (
-                  <CustomSelect value={filterPlatform} onChange={setFilterPlatform} options={platformOptions} className="bg-transparent text-xs font-medium text-gray-700 outline-none w-32 hover:bg-gray-50 rounded-md transition-colors" />
-                )}
-                <div className="w-px h-4 bg-gray-200 mx-1"></div>
-                <CustomSelect value={filterPriority} onChange={setFilterPriority} options={priorityOptions} className="bg-transparent text-xs font-medium text-gray-700 outline-none w-32 hover:bg-gray-50 rounded-md transition-colors" />
-                <div className="w-px h-4 bg-gray-200 mx-1"></div>
-                <div className="flex items-center bg-gray-50 border border-gray-200 rounded-md px-3 py-1.5 transition-colors focus-within:border-gray-400 relative">
-                  <Search className="w-3.5 h-3.5 text-gray-400 mr-2" />
-                  <input type="text" placeholder="요약/설명 검색..." value={searchInput} onChange={e=>setSearchInput(e.target.value)} className="text-xs bg-transparent outline-none w-48 placeholder:text-gray-400 text-gray-700 pr-6" />
-                  {searchInput && (
-                    <button onClick={() => { setSearchInput(''); setSearchSummary(''); }} className="absolute right-2 p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full transition-colors flex items-center justify-center">
-                      <X className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-                {(hasFilters) && (
-                  <button onClick={() => { setFilterStatus('All'); setFilterPlatform('All'); setFilterReporter('All'); setFilterPriority('All'); setSearchInput(''); setSearchSummary(''); }} className="text-[10px] text-gray-500 hover:text-gray-800 underline ml-2 font-medium">초기화</button>
-                )}
-              </div>
-
-              <div className="flex-1 bg-white rounded-b-2xl border border-gray-200 shadow-md overflow-hidden flex flex-col relative z-0">
-                <div className="overflow-y-auto no-scrollbar flex-1 relative">
-                  <table className="w-full text-left border-collapse relative">
-                    <thead className="sticky top-0 bg-gray-50/95 backdrop-blur z-10 shadow-sm">
-                      <tr>
-                        {isType2 ? (
-                          <>
-                            <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Key</th>
-                            <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">생성일</th>
-                            <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider w-1/3">요약 (Summary)</th>
-                            <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">우선순위</th>
-                            <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">상태</th>
-                            <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">보고자</th>
-                          </>
-                        ) : (
-                          <>
-                            <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Key</th>
-                            <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">상태</th>
-                            <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">우선순위</th>
-                            <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">현상분류</th>
-                            <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider w-1/3">요약 (Summary)</th>
-                            <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">플랫폼</th>
-                            <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">담당/보고</th>
-                            <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">생성일</th>
-                          </>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {renderedIssuesList}
-                    </tbody>
-                  </table>
-                </div>
-
-                {selectedIssue && (
-                  <div className="absolute inset-y-0 right-0 w-[420px] bg-white shadow-[-20px_0_40px_rgba(0,0,0,0.08)] border-l border-gray-200 z-50 flex flex-col animate-fast-fade">
-                    <div className="flex justify-between items-center px-6 py-5 border-b border-gray-100 bg-gray-50/50 shrink-0">
-                      <h3 className="text-lg font-bold text-gray-800 flex items-center">
-                        이슈 상세 정보
-                      </h3>
-                      <button onClick={() => setSelectedIssue(null)} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-md transition-colors"><X className="w-5 h-5"/></button>
+              ) : (
+                <>
+                  <div className="shrink-0 flex flex-col">
+                    <div className={`flex justify-between items-end px-1 ${isStatsExpanded ? 'mb-2' : 'mb-6'} transition-all duration-500`}>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Dashboard Statistics</span>
+                      <button onClick={() => setIsStatsExpanded(!isStatsExpanded)} className="flex items-center justify-center text-gray-500 hover:text-gray-800 transition-colors bg-white p-1.5 rounded-lg shadow-sm border border-gray-200">
+                        {isStatsExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
+                      </button>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
-                      <div>
-                        <span className="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">Key & Status</span>
-                        <div className="flex items-center space-x-3">
-                          <span 
-                            className="text-sm font-bold text-blue-600 flex items-center cursor-pointer hover:underline" 
-                            onClick={() => handleOpenJiraIssue(selectedIssue.key)}
-                          >
-                            {selectedIssue.key} <ExternalLink className="w-3 h-3 ml-1" />
-                          </span>
-                          <JiraBadge className={getStatusBadgeClass(selectedIssue.status)}>{selectedIssue.status}</JiraBadge>
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">Summary</span>
-                        <div className="text-sm font-bold text-gray-800 leading-relaxed">
-                          <HighlightText text={selectedIssue.summary} highlight={searchSummary} />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-5">
-                        <div>
-                          <span className="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">Priority</span>
-                          <div className="text-sm font-medium text-gray-700 flex items-center mt-1">
-                            {getPriorityIcon(selectedIssue.priority)} {selectedIssue.priority}
+                    <div className={`grid transition-all duration-500 ease-in-out ${isStatsExpanded ? 'grid-rows-[1fr] opacity-100 mb-6' : 'grid-rows-[0fr] opacity-0 mb-0'}`}>
+                      <div className="overflow-hidden">
+                        <div className="flex space-x-6 items-stretch pb-1">
+                          <div className="flex-1">
+                            <DetailedStatCard title="상태별 통계" icon={Activity} total={totalIssues} data={statusCounts} colorMap={statusColorMap} defaultColor="bg-blue-400" />
+                          </div>
+                          <div className="flex-1">
+                            {isType2 ? (
+                              <DetailedStatCard title="보고자별 통계" icon={User} total={totalIssues} data={reporterCounts} colorMap={{}} defaultColor="bg-indigo-400" />
+                            ) : (
+                              <DetailedStatCard title="플랫폼별 통계" icon={Server} total={totalIssues} data={platformCounts} colorMap={platformColorMap} defaultColor="bg-purple-400" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <DetailedStatCard title="우선순위별 통계" icon={AlertCircle} total={totalIssues} data={priorityCounts} colorMap={priorityColorMap} defaultColor="bg-gray-400" />
                           </div>
                         </div>
-                        <div>
-                          <span className="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">Reporter</span>
-                          <div className="text-sm font-medium text-gray-700 flex items-center mt-1"><User className="w-3 h-3 mr-1 text-gray-400"/>{selectedIssue.reporter}</div>
-                        </div>
-                        {!isType2 && (
-                          <>
-                            <div>
-                              <span className="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">Platform</span>
-                              <div className="text-sm font-medium text-gray-700 mt-1">
-                                <span className={`text-[10px] px-1.5 py-0.5 rounded border font-bold ${selectedIssue.platform === 'iOS' ? 'bg-gray-100 text-gray-700 border-gray-200' : selectedIssue.platform === 'Android' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-orange-50 text-orange-600 border-orange-200'}`}>{selectedIssue.component}</span>
-                              </div>
-                            </div>
-                            <div>
-                              <span className="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">Phenomenon</span>
-                              <div className="text-sm font-medium text-gray-700 mt-1">
-                                <span className="text-[10px] px-1.5 py-0.5 rounded border bg-purple-50 text-purple-600 border-purple-200 font-bold whitespace-nowrap">{selectedIssue.phenomenon || '-'}</span>
-                              </div>
-                            </div>
-                            <div>
-                              <span className="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">Assignee</span>
-                              <div className="text-sm font-medium text-gray-700 flex items-center mt-1"><User className="w-3 h-3 mr-1 text-gray-400"/>{selectedIssue.assignee}</div>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                      <div className="border-t border-gray-100 pt-6">
-                        <span className="text-[10px] font-bold text-gray-400 mb-3 block uppercase tracking-wider">
-                          {isType2 ? '이슈 내용' : 'Description'}
-                        </span>
-                        <div className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed bg-gray-50 p-4 rounded-xl border border-gray-100 min-h-[150px]">
-                          <HighlightText text={isType2 ? selectedIssue.issueContent : selectedIssue.description} highlight={searchSummary} />
-                        </div>
                       </div>
                     </div>
                   </div>
-                )}
-              </div>
+
+                  <div className="flex items-center space-x-3 bg-white p-3 px-5 rounded-t-2xl shadow-sm border border-gray-200 border-b-0 shrink-0 relative z-20">
+                    <Filter className="w-4 h-4 text-gray-400" />
+                    <div className="w-px h-4 bg-gray-200 mx-1"></div>
+                    <CustomSelect value={filterStatus} onChange={setFilterStatus} options={statusOptions} className="bg-transparent text-xs font-medium text-gray-700 outline-none w-32 hover:bg-gray-50 rounded-md transition-colors" />
+                    <div className="w-px h-4 bg-gray-200 mx-1"></div>
+                    {!isType2 && (
+                      <>
+                        <CustomSelect value={filterPlatform} onChange={setFilterPlatform} options={platformOptions} className="bg-transparent text-xs font-medium text-gray-700 outline-none w-32 hover:bg-gray-50 rounded-md transition-colors" />
+                        <div className="w-px h-4 bg-gray-200 mx-1"></div>
+                      </>
+                    )}
+                    {/* [수정] 보고자(Reporter) 셀렉터가 모든 타입의 스페이스에 항상 노출되도록 추가 */}
+                    <CustomSelect value={filterReporter} onChange={setFilterReporter} options={reporterOptions} className="bg-transparent text-xs font-medium text-gray-700 outline-none w-32 hover:bg-gray-50 rounded-md transition-colors" />
+                    <div className="w-px h-4 bg-gray-200 mx-1"></div>
+                    <CustomSelect value={filterPriority} onChange={setFilterPriority} options={priorityOptions} className="bg-transparent text-xs font-medium text-gray-700 outline-none w-32 hover:bg-gray-50 rounded-md transition-colors" />
+                    <div className="w-px h-4 bg-gray-200 mx-1"></div>
+                    <div className="flex items-center bg-gray-50 border border-gray-200 rounded-md px-3 py-1.5 transition-colors focus-within:border-gray-400 relative">
+                      <Search className="w-3.5 h-3.5 text-gray-400 mr-2" />
+                      <input type="text" placeholder="요약/설명 검색..." value={searchInput} onChange={e=>setSearchInput(e.target.value)} className="text-xs bg-transparent outline-none w-48 placeholder:text-gray-400 text-gray-700 pr-6" />
+                      {searchInput && (
+                        <button onClick={() => { setSearchInput(''); setSearchSummary(''); }} className="absolute right-2 p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full transition-colors flex items-center justify-center">
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                    {(hasFilters) && (
+                      <button onClick={() => { setFilterStatus('All'); setFilterPlatform('All'); setFilterReporter('All'); setFilterPriority('All'); setSearchInput(''); setSearchSummary(''); }} className="text-[10px] text-gray-500 hover:text-gray-800 underline ml-2 font-medium">초기화</button>
+                    )}
+                  </div>
+
+                  <div className="flex-1 bg-white rounded-b-2xl border border-gray-200 shadow-md overflow-hidden flex flex-col relative z-0">
+                    <div className="overflow-y-auto no-scrollbar flex-1 relative">
+                      <table className="w-full text-left border-collapse relative">
+                        <thead className="sticky top-0 bg-gray-50/95 backdrop-blur z-10 shadow-sm">
+                          <tr>
+                            {isType2 ? (
+                              <>
+                                <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Key</th>
+                                <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">생성일</th>
+                                <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider w-1/3">요약 (Summary)</th>
+                                <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">우선순위</th>
+                                <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">상태</th>
+                                <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">보고자</th>
+                              </>
+                            ) : (
+                              <>
+                                <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Key</th>
+                                <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">상태</th>
+                                <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">우선순위</th>
+                                <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">현상분류</th>
+                                <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider w-1/3">요약 (Summary)</th>
+                                <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">플랫폼</th>
+                                <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">보고자</th>
+                                <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">생성일</th>
+                              </>
+                            )}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {filteredIssues.length === 0 ? (
+                            <tr>
+                              <td colSpan={isType2 ? "6" : "8"} className="px-5 py-10 text-center text-sm text-gray-500 font-medium">
+                                등록/검색된 개발결함 내역이 없습니다.
+                              </td>
+                            </tr>
+                          ) : (
+                            filteredIssues.map(issue => (
+                              <tr 
+                                key={issue.id} 
+                                className="hover:bg-blue-50/30 transition-colors group cursor-pointer" 
+                                onClick={() => setSelectedIssue(issue)}
+                              >
+                                {isType2 ? (
+                                  <>
+                                    <td className="px-5 py-4">
+                                      <span 
+                                        className="text-xs font-bold text-blue-600 hover:underline underline-offset-2 flex items-center cursor-pointer w-max"
+                                        onClick={(e) => { e.stopPropagation(); handleOpenJiraIssue(issue.key); }}
+                                      >
+                                        {issue.key} <ExternalLink className="w-3 h-3 ml-1 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                                      </span>
+                                    </td>
+                                    <td className="px-5 py-4 text-xs text-gray-400 font-medium whitespace-nowrap">{issue.date}</td>
+                                    <td 
+                                      className="px-5 py-4 text-sm font-bold text-gray-800"
+                                      onMouseEnter={(e) => handleTooltip(e, issue.summary)}
+                                      onMouseMove={(e) => handleTooltip(e, issue.summary)}
+                                      onMouseLeave={() => setTooltipInfo({ visible: false, x: 0, y: 0, text: '' })}
+                                    >
+                                      <div className="truncate-summary truncate max-w-[200px] xl:max-w-sm"><HighlightText text={issue.summary} highlight={searchSummary} /></div>
+                                    </td>
+                                    <td className="px-5 py-4 text-xs font-medium text-gray-700 mt-1">
+                                      <div className="flex items-center">{getPriorityIcon(issue.priority)} {issue.priority}</div>
+                                    </td>
+                                    <td className="px-5 py-4"><JiraBadge className={getStatusBadgeClass(issue.status)}>{issue.status}</JiraBadge></td>
+                                    <td className="px-5 py-4">
+                                      <div className="flex flex-col space-y-1">
+                                        <span className="text-xs font-medium text-gray-700 flex items-center"><User className="w-3 h-3 mr-1 text-gray-400"/> {issue.reporter}</span>
+                                      </div>
+                                    </td>
+                                  </>
+                                ) : (
+                                  <>
+                                    <td className="px-5 py-4">
+                                      <span 
+                                        className="text-xs font-bold text-blue-600 hover:underline underline-offset-2 flex items-center cursor-pointer w-max"
+                                        onClick={(e) => { e.stopPropagation(); handleOpenJiraIssue(issue.key); }}
+                                      >
+                                        {issue.key} <ExternalLink className="w-3 h-3 ml-1 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                                      </span>
+                                    </td>
+                                    <td className="px-5 py-4"><JiraBadge className={getStatusBadgeClass(issue.status)}>{issue.status}</JiraBadge></td>
+                                    <td className="px-5 py-4 text-xs font-medium text-gray-700 mt-1">
+                                      <div className="flex items-center">{getPriorityIcon(issue.priority)} {issue.priority}</div>
+                                    </td>
+                                    <td className="px-5 py-4">
+                                      <span className="text-[10px] px-1.5 py-0.5 rounded border bg-purple-50 text-purple-600 border-purple-200 font-bold whitespace-nowrap">{issue.phenomenon || '-'}</span>
+                                    </td>
+                                    <td 
+                                      className="px-5 py-4 text-sm font-bold text-gray-800"
+                                      onMouseEnter={(e) => handleTooltip(e, issue.summary)}
+                                      onMouseMove={(e) => handleTooltip(e, issue.summary)}
+                                      onMouseLeave={() => setTooltipInfo({ visible: false, x: 0, y: 0, text: '' })}
+                                    >
+                                      <div className="truncate-summary truncate max-w-[200px] xl:max-w-sm"><HighlightText text={issue.summary} highlight={searchSummary} /></div>
+                                    </td>
+                                    <td className="px-5 py-4">
+                                      <span className={`text-[10px] px-1.5 py-0.5 rounded border font-bold ${issue.platform === 'iOS' ? 'bg-gray-100 text-gray-700 border-gray-200' : issue.platform === 'Android' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-orange-50 text-orange-600 border-orange-200'}`}>{issue.component}</span>
+                                    </td>
+                                    <td className="px-5 py-4">
+                                      <div className="flex flex-col space-y-1">
+                                        <span className="text-xs font-medium text-gray-700 flex items-center"><User className="w-3 h-3 mr-1 text-gray-400"/> {issue.reporter}</span>
+                                      </div>
+                                    </td>
+                                    <td className="px-5 py-4 text-xs text-gray-400 font-medium whitespace-nowrap">{issue.date}</td>
+                                  </>
+                                )}
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {selectedIssue && (
+                      <div className="absolute inset-y-0 right-0 w-[420px] bg-white shadow-[-20px_0_40px_rgba(0,0,0,0.08)] border-l border-gray-200 z-50 flex flex-col animate-fast-fade">
+                        <div className="flex justify-between items-center px-6 py-5 border-b border-gray-100 bg-gray-50/50 shrink-0">
+                          <h3 className="text-lg font-bold text-gray-800 flex items-center">
+                            이슈 상세 정보
+                          </h3>
+                          <button onClick={() => setSelectedIssue(null)} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-md transition-colors"><X className="w-5 h-5"/></button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+                          <div>
+                            <span className="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">Key & Status</span>
+                            <div className="flex items-center space-x-3">
+                              <span 
+                                className="text-sm font-bold text-blue-600 flex items-center cursor-pointer hover:underline" 
+                                onClick={() => handleOpenJiraIssue(selectedIssue.key)}
+                              >
+                                {selectedIssue.key} <ExternalLink className="w-3 h-3 ml-1" />
+                              </span>
+                              <JiraBadge className={getStatusBadgeClass(selectedIssue.status)}>{selectedIssue.status}</JiraBadge>
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">Summary</span>
+                            <div className="text-sm font-bold text-gray-800 leading-relaxed">
+                              <HighlightText text={selectedIssue.summary} highlight={searchSummary} />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-5">
+                            <div>
+                              <span className="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">Priority</span>
+                              <div className="text-sm font-medium text-gray-700 flex items-center mt-1">
+                                {getPriorityIcon(selectedIssue.priority)} {selectedIssue.priority}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">Reporter</span>
+                              <div className="text-sm font-medium text-gray-700 flex items-center mt-1"><User className="w-3 h-3 mr-1 text-gray-400"/>{selectedIssue.reporter}</div>
+                            </div>
+                            {!isType2 && (
+                              <>
+                                <div>
+                                  <span className="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">Platform</span>
+                                  <div className="text-sm font-medium text-gray-700 mt-1">
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded border font-bold ${selectedIssue.platform === 'iOS' ? 'bg-gray-100 text-gray-700 border-gray-200' : selectedIssue.platform === 'Android' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-orange-50 text-orange-600 border-orange-200'}`}>{selectedIssue.component}</span>
+                                  </div>
+                                </div>
+                                <div>
+                                  <span className="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">Phenomenon</span>
+                                  <div className="text-sm font-medium text-gray-700 mt-1">
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded border bg-purple-50 text-purple-600 border-purple-200 font-bold whitespace-nowrap">{selectedIssue.phenomenon || '-'}</span>
+                                  </div>
+                                </div>
+                                <div>
+                                  <span className="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">Assignee</span>
+                                  <div className="text-sm font-medium text-gray-700 flex items-center mt-1"><User className="w-3 h-3 mr-1 text-gray-400"/>{selectedIssue.assignee}</div>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                          <div className="border-t border-gray-100 pt-6">
+                            <span className="text-[10px] font-bold text-gray-400 mb-3 block uppercase tracking-wider">
+                              {isType2 ? '이슈 내용' : 'Description'}
+                            </span>
+                            <div className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed bg-gray-50 p-4 rounded-xl border border-gray-100 min-h-[150px]">
+                              <HighlightText text={isType2 ? selectedIssue.issueContent : selectedIssue.description} highlight={searchSummary} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           )}
           {renderTooltip()}
