@@ -449,7 +449,7 @@ export const AccountsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
             <KeyRound className="w-8 h-8 text-blue-600" />
           </div>
           <h2 className="text-xl font-bold text-gray-800 mb-2">보안 PIN 입력</h2>
-          <p className="text-xs text-gray-500 mb-6 text-center">계정 금고 열람을 위해<br/>PIN 번호(1324)를 입력해주세요.</p>
+          <p className="text-xs text-gray-500 mb-6 text-center">계정 금고 열람을 위해<br/>PIN 번호를 입력해주세요.</p>
           
           <div className="flex space-x-4 mb-6 h-4">
             {[0, 1, 2, 3].map(i => (
