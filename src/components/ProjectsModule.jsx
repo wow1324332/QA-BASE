@@ -210,6 +210,7 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   const [searchSummary, setSearchSummary] = useState(''); 
   
   const [isStatsExpanded, setIsStatsExpanded] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const [tooltipInfo, setTooltipInfo] = useState({ visible: false, x: 0, y: 0, text: '' });
   const [selectedIssue, setSelectedIssue] = useState(null);
@@ -275,7 +276,7 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
       };
       fetchJiraIssues();
     }
-  }, [view, activeEpic, isType2]);
+  }, [view, activeEpic, isType2, refreshTrigger]);
 
   useEffect(() => {
     if (view === 'issues' && activeEpic && !loading && issues.length > 0) {
@@ -293,12 +294,6 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
       }
     }
   }, [issues, activeEpic, loading, epics, isType2]);
-
-  const handleOpenJiraIssue = (issueKey) => {
-    if (jiraDomain && issueKey) {
-      window.open(`https://${jiraDomain}/browse/${issueKey}`, '_blank');
-    }
-  };
 
   const handleSpaceSubmit = async (data) => {
     try {
@@ -340,10 +335,10 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   const filteredEpics = epics.filter(e => e.spaceKey === activeSpace);
 
   const totalIssues = issues.length;
-  const statusCounts = issues.reduce((acc, cur) => { acc[cur.status] = (acc[cur.status] || 0) + 1; return acc; }, {});
-  const platformCounts = issues.reduce((acc, cur) => { acc[cur.component] = (acc[cur.component] || 0) + 1; return acc; }, {});
-  const reporterCounts = issues.reduce((acc, cur) => { acc[cur.reporter] = (acc[cur.reporter] || 0) + 1; return acc; }, {});
-  const priorityCounts = issues.reduce((acc, cur) => { acc[cur.priority] = (acc[cur.priority] || 0) + 1; return acc; }, {});
+  const statusCounts = React.useMemo(() => issues.reduce((acc, cur) => { acc[cur.status] = (acc[cur.status] || 0) + 1; return acc; }, {}), [issues]);
+  const platformCounts = React.useMemo(() => issues.reduce((acc, cur) => { acc[cur.component] = (acc[cur.component] || 0) + 1; return acc; }, {}), [issues]);
+  const reporterCounts = React.useMemo(() => issues.reduce((acc, cur) => { acc[cur.reporter] = (acc[cur.reporter] || 0) + 1; return acc; }, {}), [issues]);
+  const priorityCounts = React.useMemo(() => issues.reduce((acc, cur) => { acc[cur.priority] = (acc[cur.priority] || 0) + 1; return acc; }, {}), [issues]);
 
   const statusColorMap = {
     'QA 완료': 'bg-green-500', 'Closed': 'bg-green-500', '완료': 'bg-green-500', 'Resolved': 'bg-green-500',
@@ -355,13 +350,14 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   const platformColorMap = { 'Android': 'bg-green-400', 'iOS': 'bg-gray-800', 'Backend': 'bg-orange-500', 'Web': 'bg-blue-400' };
   const priorityColorMap = { 'Critical': 'bg-red-600', 'High': 'bg-orange-500', 'Medium': 'bg-yellow-500', 'Low': 'bg-blue-400' };
 
-  const resolvedIssues = issues.filter(i => {
+  const resolvedIssues = React.useMemo(() => issues.filter(i => {
     if (isType2) return i.status.includes('종료') || i.status.includes('Closed');
     return i.status.includes('완료') || i.status.includes('Closed');
-  }).length;
+  }).length, [issues, isType2]);
+  
   const progressPercent = totalIssues === 0 ? 0 : Math.round((resolvedIssues / totalIssues) * 100);
 
-  const currentEpicData = epics.find(e => e.epicKey === activeEpic);
+  const currentEpicData = React.useMemo(() => epics.find(e => e.epicKey === activeEpic), [epics, activeEpic]);
   const displayProgress = loading ? (currentEpicData?.progress || 0) : progressPercent;
 
   const getPriorityIcon = (priority) => {
@@ -381,42 +377,137 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
     return 'bg-gray-100 text-gray-600 border-gray-200';
   };
 
-  // [수정] 보고자(Reporter) 필터가 전역으로 동작하도록 로직 수정
-  const filteredIssues = issues.filter(issue => {
-    if (filterStatus !== 'All' && issue.status !== filterStatus) return false;
-    if (filterPriority !== 'All' && issue.priority !== filterPriority) return false;
-    if (filterReporter !== 'All' && issue.reporter !== filterReporter) return false; // 모든 타입에서 동작
-    
-    if (!isType2) {
-      if (filterPlatform !== 'All' && issue.component !== filterPlatform) return false;
-    }
-    
-    if (searchSummary) {
-      const term = searchSummary.toLowerCase();
-      const inSummary = issue.summary?.toLowerCase().includes(term);
-      const targetDesc = isType2 ? issue.issueContent : issue.description;
-      const inDesc = targetDesc?.toLowerCase().includes(term);
-      if (!inSummary && !inDesc) return false;
-    }
-    return true;
-  });
+  const filteredIssues = React.useMemo(() => {
+    return issues.filter(issue => {
+      if (filterStatus !== 'All' && issue.status !== filterStatus) return false;
+      if (filterPriority !== 'All' && issue.priority !== filterPriority) return false;
+      if (filterReporter !== 'All' && issue.reporter !== filterReporter) return false; 
+      
+      if (!isType2) {
+        if (filterPlatform !== 'All' && issue.component !== filterPlatform) return false;
+      }
+      
+      if (searchSummary) {
+        const term = searchSummary.toLowerCase();
+        const inSummary = issue.summary?.toLowerCase().includes(term);
+        const targetDesc = isType2 ? issue.issueContent : issue.description;
+        const inDesc = targetDesc?.toLowerCase().includes(term);
+        if (!inSummary && !inDesc) return false;
+      }
+      return true;
+    });
+  }, [issues, filterStatus, filterPriority, filterReporter, filterPlatform, isType2, searchSummary]);
 
-  const statusOptions = [{value: 'All', label: '상태 전체'}, ...Array.from(new Set(issues.map(i => i.status))).filter(Boolean).map(s => ({value: s, label: s}))];
-  const platformOptions = [{value: 'All', label: '플랫폼 전체'}, ...Array.from(new Set(issues.map(i => i.component))).filter(Boolean).map(p => ({value: p, label: p}))];
-  const reporterOptions = [{value: 'All', label: '보고자 전체'}, ...Array.from(new Set(issues.map(i => i.reporter))).filter(Boolean).map(p => ({value: p, label: p}))];
-  const priorityOptions = [{value: 'All', label: '우선순위 전체'}, ...Array.from(new Set(issues.map(i => i.priority))).filter(Boolean).map(p => ({value: p, label: p}))];
+  const statusOptions = React.useMemo(() => [{value: 'All', label: '상태 전체'}, ...Array.from(new Set(issues.map(i => i.status))).filter(Boolean).map(s => ({value: s, label: s}))], [issues]);
+  const platformOptions = React.useMemo(() => [{value: 'All', label: '플랫폼 전체'}, ...Array.from(new Set(issues.map(i => i.component))).filter(Boolean).map(p => ({value: p, label: p}))], [issues]);
+  const reporterOptions = React.useMemo(() => [{value: 'All', label: '보고자 전체'}, ...Array.from(new Set(issues.map(i => i.reporter))).filter(Boolean).map(p => ({value: p, label: p}))], [issues]);
+  const priorityOptions = React.useMemo(() => [{value: 'All', label: '우선순위 전체'}, ...Array.from(new Set(issues.map(i => i.priority))).filter(Boolean).map(p => ({value: p, label: p}))], [issues]);
 
-  const handleTooltip = (e, text) => {
+  const handleTooltip = React.useCallback((e, text) => {
     const textSpan = e.currentTarget.querySelector('.truncate-summary');
-    let isTruncated = false;
-    if (textSpan && textSpan.scrollWidth > textSpan.clientWidth) isTruncated = true;
-
-    if (isTruncated) {
-      setTooltipInfo({ visible: true, x: e.clientX, y: e.clientY, text: text });
+    if (textSpan && textSpan.scrollWidth > textSpan.clientWidth) {
+      setTooltipInfo(prev => {
+        if (prev.visible && prev.text === text && Math.abs(prev.x - e.clientX) < 5 && Math.abs(prev.y - e.clientY) < 5) {
+          return prev;
+        }
+        return { visible: true, x: e.clientX, y: e.clientY, text };
+      });
     } else {
       setTooltipInfo(prev => prev.visible ? { visible: false, x: 0, y: 0, text: '' } : prev);
     }
-  };
+  }, []);
+
+  const handleOpenJiraIssue = React.useCallback((issueKey) => {
+    if (jiraDomain && issueKey) {
+      window.open(`https://${jiraDomain}/browse/${issueKey}`, '_blank');
+    }
+  }, [jiraDomain]);
+
+  const renderedIssues = React.useMemo(() => {
+    if (filteredIssues.length === 0) {
+      return (
+        <tr>
+          <td colSpan={isType2 ? "6" : "8"} className="px-5 py-10 text-center text-sm text-gray-500 font-medium">
+            등록/검색된 개발결함 내역이 없습니다.
+          </td>
+        </tr>
+      );
+    }
+
+    return filteredIssues.map(issue => (
+      <tr 
+        key={issue.id} 
+        className="hover:bg-blue-50/30 transition-colors group cursor-pointer" 
+        onClick={() => setSelectedIssue(issue)}
+      >
+        {isType2 ? (
+          <>
+            <td className="px-5 py-4">
+              <span 
+                className="text-xs font-bold text-blue-600 hover:underline underline-offset-2 flex items-center cursor-pointer w-max"
+                onClick={(e) => { e.stopPropagation(); handleOpenJiraIssue(issue.key); }}
+              >
+                {issue.key} <ExternalLink className="w-3 h-3 ml-1 text-gray-400 group-hover:text-blue-500 transition-colors" />
+              </span>
+            </td>
+            <td className="px-5 py-4 text-xs text-gray-400 font-medium whitespace-nowrap">{issue.date}</td>
+            <td 
+              className="px-5 py-4 text-sm font-bold text-gray-800"
+              onMouseEnter={(e) => handleTooltip(e, issue.summary)}
+              onMouseMove={(e) => handleTooltip(e, issue.summary)}
+              onMouseLeave={() => setTooltipInfo(prev => prev.visible ? { visible: false, x: 0, y: 0, text: '' } : prev)}
+            >
+              <div className="truncate-summary truncate max-w-[200px] xl:max-w-sm"><HighlightText text={issue.summary} highlight={searchSummary} /></div>
+            </td>
+            <td className="px-5 py-4 text-xs font-medium text-gray-700 mt-1">
+              <div className="flex items-center">{getPriorityIcon(issue.priority)} {issue.priority}</div>
+            </td>
+            <td className="px-5 py-4"><JiraBadge className={getStatusBadgeClass(issue.status)}>{issue.status}</JiraBadge></td>
+            <td className="px-5 py-4">
+              <div className="flex flex-col space-y-1">
+                <span className="text-xs font-medium text-gray-700 flex items-center"><User className="w-3 h-3 mr-1 text-gray-400"/> {issue.reporter}</span>
+              </div>
+            </td>
+          </>
+        ) : (
+          <>
+            <td className="px-5 py-4">
+              <span 
+                className="text-xs font-bold text-blue-600 hover:underline underline-offset-2 flex items-center cursor-pointer w-max"
+                onClick={(e) => { e.stopPropagation(); handleOpenJiraIssue(issue.key); }}
+              >
+                {issue.key} <ExternalLink className="w-3 h-3 ml-1 text-gray-400 group-hover:text-blue-500 transition-colors" />
+              </span>
+            </td>
+            <td className="px-5 py-4"><JiraBadge className={getStatusBadgeClass(issue.status)}>{issue.status}</JiraBadge></td>
+            <td className="px-5 py-4 text-xs font-medium text-gray-700 mt-1">
+              <div className="flex items-center">{getPriorityIcon(issue.priority)} {issue.priority}</div>
+            </td>
+            <td className="px-5 py-4">
+              <span className="text-[10px] px-1.5 py-0.5 rounded border bg-purple-50 text-purple-600 border-purple-200 font-bold whitespace-nowrap">{issue.phenomenon || '-'}</span>
+            </td>
+            <td 
+              className="px-5 py-4 text-sm font-bold text-gray-800"
+              onMouseEnter={(e) => handleTooltip(e, issue.summary)}
+              onMouseMove={(e) => handleTooltip(e, issue.summary)}
+              onMouseLeave={() => setTooltipInfo(prev => prev.visible ? { visible: false, x: 0, y: 0, text: '' } : prev)}
+            >
+              <div className="truncate-summary truncate max-w-[200px] xl:max-w-sm"><HighlightText text={issue.summary} highlight={searchSummary} /></div>
+            </td>
+            <td className="px-5 py-4">
+              <span className={`text-[10px] px-1.5 py-0.5 rounded border font-bold ${issue.platform === 'iOS' ? 'bg-gray-100 text-gray-700 border-gray-200' : issue.platform === 'Android' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-orange-50 text-orange-600 border-orange-200'}`}>{issue.component}</span>
+            </td>
+            <td className="px-5 py-4">
+              <div className="flex flex-col space-y-1">
+                <span className="text-xs font-medium text-gray-700 flex items-center"><User className="w-3 h-3 mr-1 text-gray-400"/> {issue.assignee}</span>
+              </div>
+            </td>
+            <td className="px-5 py-4 text-xs text-gray-400 font-medium whitespace-nowrap">{issue.date}</td>
+          </>
+        )}
+      </tr>
+    ));
+  }, [filteredIssues, isType2, searchSummary, handleOpenJiraIssue, handleTooltip]);
 
   const renderTooltip = () => {
     if (!tooltipInfo.visible) return null;
@@ -437,7 +528,6 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
     );
   };
 
-  // [수정] 보고자 필터가 항상 리셋 조건에 포함되도록 반영
   const hasFilters = filterStatus !== 'All' || filterPriority !== 'All' || filterReporter !== 'All' || searchInput || (!isType2 && filterPlatform !== 'All');
 
   return (
@@ -449,7 +539,6 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200 shadow-sm hover-breath cursor-default">
-            {/* [수정됨] 프로필 이미지가 등록되어 있으면 이미지를, 없으면 이니셜을 보여주도록 핀셋 적용 (overflow-hidden 추가) */}
             <div className="w-6 h-6 rounded-full bg-gray-800 flex items-center justify-center text-white text-[10px] font-medium overflow-hidden">
               {user?.profileImage ? <img src={user.profileImage} alt="profile" className="w-full h-full object-cover" /> : user?.name?.charAt(0) || 'U'}
             </div>
@@ -612,9 +701,19 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
                   <div className="shrink-0 flex flex-col">
                     <div className={`flex justify-between items-end px-1 ${isStatsExpanded ? 'mb-2' : 'mb-6'} transition-all duration-500`}>
                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Dashboard Statistics</span>
-                      <button onClick={() => setIsStatsExpanded(!isStatsExpanded)} className="flex items-center justify-center text-gray-500 hover:text-gray-800 transition-colors bg-white p-1.5 rounded-lg shadow-sm border border-gray-200">
-                        {isStatsExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
-                      </button>
+                      <div className="flex items-center space-x-3">
+                        <button 
+                          onClick={() => setRefreshTrigger(prev => prev + 1)}
+                          disabled={loading}
+                          className={`font-black italic uppercase text-[15px] tracking-tighter text-gray-900 drop-shadow-[0_2px_1px_rgba(0,0,0,0.3)] transition-all duration-300 px-2 ${loading ? 'opacity-50 cursor-not-allowed animate-pulse' : 'hover:scale-110 hover:brightness-125 active:scale-95'}`}
+                          title="최신 데이터로 새로고침"
+                        >
+                          REFRESH
+                        </button>
+                        <button onClick={() => setIsStatsExpanded(!isStatsExpanded)} className="flex items-center justify-center text-gray-500 hover:text-gray-800 transition-colors bg-white p-1.5 rounded-lg shadow-sm border border-gray-200">
+                          {isStatsExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
+                        </button>
+                      </div>
                     </div>
                     <div className={`grid transition-all duration-500 ease-in-out ${isStatsExpanded ? 'grid-rows-[1fr] opacity-100 mb-6' : 'grid-rows-[0fr] opacity-0 mb-0'}`}>
                       <div className="overflow-hidden">
@@ -648,7 +747,6 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
                         <div className="w-px h-4 bg-gray-200 mx-1"></div>
                       </>
                     )}
-                    {/* [수정] 보고자(Reporter) 셀렉터가 모든 타입의 스페이스에 항상 노출되도록 추가 */}
                     <CustomSelect value={filterReporter} onChange={setFilterReporter} options={reporterOptions} className="bg-transparent text-xs font-medium text-gray-700 outline-none w-32 hover:bg-gray-50 rounded-md transition-colors" />
                     <div className="w-px h-4 bg-gray-200 mx-1"></div>
                     <CustomSelect value={filterPriority} onChange={setFilterPriority} options={priorityOptions} className="bg-transparent text-xs font-medium text-gray-700 outline-none w-32 hover:bg-gray-50 rounded-md transition-colors" />
@@ -669,7 +767,7 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
 
                   <div className="flex-1 bg-white rounded-b-2xl border border-gray-200 shadow-md overflow-hidden flex flex-col relative z-0">
                     <div className="overflow-y-auto no-scrollbar flex-1 relative">
-                      <table className="w-full text-left border-collapse relative">
+                      <table className="w-full text-left border-collapse relative table-fixed">
                         <thead className="sticky top-0 bg-gray-50/95 backdrop-blur z-10 shadow-sm">
                           <tr>
                             {isType2 ? (
@@ -689,94 +787,14 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
                                 <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">현상분류</th>
                                 <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider w-1/3">요약 (Summary)</th>
                                 <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">플랫폼</th>
-                                <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">보고자</th>
+                                <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">담당/보고</th>
                                 <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">생성일</th>
                               </>
                             )}
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                          {filteredIssues.length === 0 ? (
-                            <tr>
-                              <td colSpan={isType2 ? "6" : "8"} className="px-5 py-10 text-center text-sm text-gray-500 font-medium">
-                                등록/검색된 개발결함 내역이 없습니다.
-                              </td>
-                            </tr>
-                          ) : (
-                            filteredIssues.map(issue => (
-                              <tr 
-                                key={issue.id} 
-                                className="hover:bg-blue-50/30 transition-colors group cursor-pointer" 
-                                onClick={() => setSelectedIssue(issue)}
-                              >
-                                {isType2 ? (
-                                  <>
-                                    <td className="px-5 py-4">
-                                      <span 
-                                        className="text-xs font-bold text-blue-600 hover:underline underline-offset-2 flex items-center cursor-pointer w-max"
-                                        onClick={(e) => { e.stopPropagation(); handleOpenJiraIssue(issue.key); }}
-                                      >
-                                        {issue.key} <ExternalLink className="w-3 h-3 ml-1 text-gray-400 group-hover:text-blue-500 transition-colors" />
-                                      </span>
-                                    </td>
-                                    <td className="px-5 py-4 text-xs text-gray-400 font-medium whitespace-nowrap">{issue.date}</td>
-                                    <td 
-                                      className="px-5 py-4 text-sm font-bold text-gray-800"
-                                      onMouseEnter={(e) => handleTooltip(e, issue.summary)}
-                                      onMouseMove={(e) => handleTooltip(e, issue.summary)}
-                                      onMouseLeave={() => setTooltipInfo({ visible: false, x: 0, y: 0, text: '' })}
-                                    >
-                                      <div className="truncate-summary truncate max-w-[200px] xl:max-w-sm"><HighlightText text={issue.summary} highlight={searchSummary} /></div>
-                                    </td>
-                                    <td className="px-5 py-4 text-xs font-medium text-gray-700 mt-1">
-                                      <div className="flex items-center">{getPriorityIcon(issue.priority)} {issue.priority}</div>
-                                    </td>
-                                    <td className="px-5 py-4"><JiraBadge className={getStatusBadgeClass(issue.status)}>{issue.status}</JiraBadge></td>
-                                    <td className="px-5 py-4">
-                                      <div className="flex flex-col space-y-1">
-                                        <span className="text-xs font-medium text-gray-700 flex items-center"><User className="w-3 h-3 mr-1 text-gray-400"/> {issue.reporter}</span>
-                                      </div>
-                                    </td>
-                                  </>
-                                ) : (
-                                  <>
-                                    <td className="px-5 py-4">
-                                      <span 
-                                        className="text-xs font-bold text-blue-600 hover:underline underline-offset-2 flex items-center cursor-pointer w-max"
-                                        onClick={(e) => { e.stopPropagation(); handleOpenJiraIssue(issue.key); }}
-                                      >
-                                        {issue.key} <ExternalLink className="w-3 h-3 ml-1 text-gray-400 group-hover:text-blue-500 transition-colors" />
-                                      </span>
-                                    </td>
-                                    <td className="px-5 py-4"><JiraBadge className={getStatusBadgeClass(issue.status)}>{issue.status}</JiraBadge></td>
-                                    <td className="px-5 py-4 text-xs font-medium text-gray-700 mt-1">
-                                      <div className="flex items-center">{getPriorityIcon(issue.priority)} {issue.priority}</div>
-                                    </td>
-                                    <td className="px-5 py-4">
-                                      <span className="text-[10px] px-1.5 py-0.5 rounded border bg-purple-50 text-purple-600 border-purple-200 font-bold whitespace-nowrap">{issue.phenomenon || '-'}</span>
-                                    </td>
-                                    <td 
-                                      className="px-5 py-4 text-sm font-bold text-gray-800"
-                                      onMouseEnter={(e) => handleTooltip(e, issue.summary)}
-                                      onMouseMove={(e) => handleTooltip(e, issue.summary)}
-                                      onMouseLeave={() => setTooltipInfo({ visible: false, x: 0, y: 0, text: '' })}
-                                    >
-                                      <div className="truncate-summary truncate max-w-[200px] xl:max-w-sm"><HighlightText text={issue.summary} highlight={searchSummary} /></div>
-                                    </td>
-                                    <td className="px-5 py-4">
-                                      <span className={`text-[10px] px-1.5 py-0.5 rounded border font-bold ${issue.platform === 'iOS' ? 'bg-gray-100 text-gray-700 border-gray-200' : issue.platform === 'Android' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-orange-50 text-orange-600 border-orange-200'}`}>{issue.component}</span>
-                                    </td>
-                                    <td className="px-5 py-4">
-                                      <div className="flex flex-col space-y-1">
-                                        <span className="text-xs font-medium text-gray-700 flex items-center"><User className="w-3 h-3 mr-1 text-gray-400"/> {issue.reporter}</span>
-                                      </div>
-                                    </td>
-                                    <td className="px-5 py-4 text-xs text-gray-400 font-medium whitespace-nowrap">{issue.date}</td>
-                                  </>
-                                )}
-                              </tr>
-                            ))
-                          )}
+                          {renderedIssues}
                         </tbody>
                       </table>
                     </div>
