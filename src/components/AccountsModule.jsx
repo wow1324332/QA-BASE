@@ -489,7 +489,10 @@ export const AccountsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden relative">
+      <div 
+        className="flex flex-1 overflow-hidden relative bg-[#f0f2f5] bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/project-bg.jpg')" }}
+      >
         <aside className="w-64 bg-white border-r border-gray-100 transition-all duration-300 ease-in-out flex flex-col z-10 overflow-hidden shrink-0 shadow-sm">
           <div className="p-4 flex flex-col h-full">
             <div className="text-[10px] font-bold text-gray-400 tracking-wider mb-4 px-3 mt-2 uppercase">Menu</div>
