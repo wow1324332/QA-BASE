@@ -489,14 +489,18 @@ export const AccountsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
         </div>
       </header>
 
-      <div 
-        className="flex flex-1 overflow-hidden relative bg-[#f0f2f5] bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/project-bg.jpg')" }}
-      >
-        <aside className="w-64 bg-white border-r border-gray-100 transition-all duration-300 ease-in-out flex flex-col z-10 overflow-hidden shrink-0 shadow-sm">
-          <div className="p-4 flex flex-col h-full">
+<div className="flex flex-1 overflow-hidden relative bg-[#f0f2f5]">
+        
+        {/* [추가] 블러 처리된 독립적인 배경 레이어 */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat blur-[4px] scale-[1.02] z-0 pointer-events-none"
+          style={{ backgroundImage: "url('/project-bg.jpg')" }}
+        ></div>
+  
+        <aside className="w-64 bg-white/60 backdrop-blur-xl border-r border-gray-100/50 transition-all duration-300 ease-in-out flex flex-col z-10 overflow-hidden shrink-0 shadow-[-5px_0_30px_rgba(0,0,0,0.02)]">
+          <div className="p-4 flex flex-col h-full relative z-10">
             <div className="text-[10px] font-bold text-gray-400 tracking-wider mb-4 px-3 mt-2 uppercase">Menu</div>
-            <button onClick={() => onNavigate('board')} className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors mb-2">
+            <button onClick={() => onNavigate('board')} className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-500 hover:bg-gray-50/50 hover:text-gray-900 transition-colors mb-2">
               <LayoutDashboard className="w-4 h-4" />
               <span className="text-sm font-medium">Functional Board</span>
             </button>
