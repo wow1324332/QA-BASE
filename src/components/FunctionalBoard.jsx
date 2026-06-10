@@ -16,12 +16,9 @@ export const FunctionalBoard = ({ user, onNavigate, onLogout, onShowProfileModal
       className="w-screen h-screen bg-[#f8f9fa] flex flex-col animate-simple-fade bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: "url('/bg-functional.png')" }}
     >
-      <header className="h-20 px-8 flex justify-between items-center bg-white/50 backdrop-blur-md border-b border-gray-100 shadow-sm">
-        <div className="flex items-center space-x-3">
-          <AppLogo className="w-8 h-8" />
-          <span className="text-xl font-medium tracking-wider text-gray-800">QA BASE</span>
-        </div>
-
+      <header className="h-20 px-8 flex justify-between items-center bg-[url('/header-bg.jpg')] bg-cover bg-center border-b border-gray-100 shadow-sm">
+        <div className="flex items-center space-x-3"></div>
+        
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-2 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-md hover-breath cursor-default">
             <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
@@ -73,7 +70,7 @@ export const FunctionalBoard = ({ user, onNavigate, onLogout, onShowProfileModal
       <main className="flex-1 overflow-auto p-12 flex flex-col items-center">
         <div className="w-full max-w-5xl">
           <h2 className="text-3xl font-light text-gray-800 mb-2">Functional Board</h2>
-          <p className="text-sm text-gray-500 mb-10">프리미엄 QA의 모든 것을 경험해보세요.</p>
+          <p className="text-sm text-gray-500 mb-10">원하는 업무 기지를 선택하세요.</p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div 
