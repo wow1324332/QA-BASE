@@ -704,7 +704,7 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
                 <>
                   <div className="shrink-0 flex flex-col">
                     <div className={`flex justify-between items-end px-1 ${isStatsExpanded ? 'mb-2' : 'mb-6'} transition-all duration-500`}>
-                      <span className="text-[10px] font-bold text-gray-800 uppercase tracking-wider">Dashboard Statistics</span>
+                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Dashboard Statistics</span>
                       <div className="flex items-center space-x-3">
                         <button 
                           onClick={() => setRefreshTrigger(prev => prev + 1)}
