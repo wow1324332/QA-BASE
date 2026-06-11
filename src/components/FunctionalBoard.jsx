@@ -69,7 +69,7 @@ export const FunctionalBoard = ({ user, onNavigate, onLogout, onShowProfileModal
 
       <main className="flex-1 overflow-auto p-12 flex flex-col items-center">
         <div className="w-full max-w-5xl">
-          <h2 className="text-3xl font-light text-gray-800 mb-2">Functional Board</h2>
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">Functional Board</h2>
           <p className="text-sm text-gray-500 mb-10">사용할 QA 기능을 선택하세요.</p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
