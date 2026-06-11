@@ -499,7 +499,7 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
             </td>
             <td className="px-5 py-4">
               <div className="flex flex-col space-y-1">
-                <span className="text-xs font-medium text-gray-700 flex items-center"><User className="w-3 h-3 mr-1 text-gray-400"/> {issue.assignee}</span>
+                <span className="text-xs font-medium text-gray-700 flex items-center"><User className="w-3 h-3 mr-1 text-gray-400"/> {issue.reporter}</span>
               </div>
             </td>
             <td className="px-5 py-4 text-xs text-gray-400 font-medium whitespace-nowrap">{issue.date}</td>
@@ -547,22 +547,37 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
         </div>
       </header>
 
-      <div 
-        className="flex flex-1 overflow-hidden relative bg-[#f0f2f5] bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/project-bg.jpg')" }}
-      >
-        <aside className={`bg-white/60 backdrop-blur-xl shadow-[-5px_0_30px_rgba(0,0,0,0.02)] transition-all duration-300 ease-in-out flex flex-col z-10 overflow-hidden whitespace-nowrap ${sidebarOpen ? 'w-64' : 'w-0'}`}>
+<div className="flex flex-1 overflow-hidden relative bg-[#f0f2f5]">
+        
+        {/* 1. 블러 처리된 배경 레이어 (여기서 깔끔하게 닫혀야 함) */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat blur-[2px] scale-[1.02] z-0 pointer-events-none"
+          style={{ backgroundImage: "url('/project-bg.jpg')" }}
+        ></div>
+
+        {/* 2. 사이드바 영역 */}
+        <aside className={`bg-white/60 backdrop-blur-xl border-r border-gray-100/50 shadow-[-5px_0_30px_rgba(0,0,0,0.02)] transition-all duration-300 ease-in-out flex flex-col z-10 overflow-hidden whitespace-nowrap ${sidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full'}`}>
           <div className="p-4 space-y-1 w-64">
             <div className="text-xs font-semibold text-gray-400 tracking-wider mb-4 px-3 mt-2">MENU</div>
-            <button onClick={() => onNavigate('board')} className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors"><LayoutDashboard className="w-4 h-4" /><span className="text-sm font-medium">Functional Board</span></button>
-            <div className="h-px bg-gray-100 my-2 mx-3"></div>
-            <button onClick={() => { setActiveMenu('space'); setView('spaces'); setActiveSpace(null); setActiveEpic(null); }} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ${activeMenu === 'space' ? 'bg-blue-50/50 text-blue-700 font-medium border border-blue-100 shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}><Server className={`w-4 h-4 ${activeMenu === 'space' ? 'text-blue-600' : ''}`} /><span className="text-sm">Space Board</span></button>
+            <button onClick={() => onNavigate('board')} className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-500 hover:bg-gray-50/50 hover:text-gray-900 transition-colors">
+              <LayoutDashboard className="w-4 h-4" />
+              <span className="text-sm font-medium">Functional Board</span>
+            </button>
+            <div className="h-px bg-gray-100/50 my-2 mx-3"></div>
+            <button onClick={() => { setActiveMenu('space'); setView('spaces'); setActiveSpace(null); setActiveEpic(null); }} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ${activeMenu === 'space' ? 'bg-blue-50/50 text-blue-700 font-medium border border-blue-100/50 shadow-sm' : 'text-gray-500 hover:bg-gray-50/50 hover:text-gray-900'}`}>
+              <Server className={`w-4 h-4 ${activeMenu === 'space' ? 'text-blue-600' : ''}`} />
+              <span className="text-sm">Space Board</span>
+            </button>
             {activeSpace && (
-              <button onClick={() => { setActiveMenu('epic'); setView('epics'); }} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ml-2 w-[calc(100%-8px)] ${activeMenu === 'epic' ? 'bg-gray-50 text-gray-900 font-medium border border-gray-200 shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}><Kanban className="w-4 h-4" /><span className="text-sm">Project Board</span></button>
+              <button onClick={() => { setActiveMenu('epic'); setView('epics'); }} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ml-2 w-[calc(100%-8px)] ${activeMenu === 'epic' ? 'bg-gray-50/50 text-gray-900 font-medium border border-gray-200/50 shadow-sm' : 'text-gray-500 hover:bg-gray-50/50 hover:text-gray-900'}`}>
+                <Kanban className="w-4 h-4" />
+                <span className="text-sm">Project Board</span>
+              </button>
             )}
           </div>
         </aside>
 
+        {/* 3. 접기/펴기 버튼 */}
           {/* 미니멀 시네마틱 폴딩 핸들 (아이콘 및 테두리 제거, 사이즈 축소) */}
         <button 
           onClick={() => setSidebarOpen(!sidebarOpen)} 
@@ -574,7 +589,8 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
           <div className="w-[1.5px] h-5 bg-gray-400/40 rounded-full transition-colors duration-300 group-hover:bg-gray-500/60"></div>
         </button>
 
-        <main className={`flex-1 overflow-hidden flex flex-col p-8 transition-all duration-300 ${!sidebarOpen ? 'ml-12' : ''}`}>
+        {/* 4. 메인 콘텐츠 영역 (relative z-10 필수) */}
+        <main className={`relative z-10 flex-1 overflow-hidden flex flex-col p-8 transition-all duration-300 ${!sidebarOpen ? 'ml-12' : ''}`}>
           
           {view === 'spaces' && (
             <div className="animate-fade-in h-full flex flex-col">
@@ -704,7 +720,7 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
                 <>
                   <div className="shrink-0 flex flex-col">
                     <div className={`flex justify-between items-end px-1 ${isStatsExpanded ? 'mb-2' : 'mb-6'} transition-all duration-500`}>
-                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Dashboard Statistics</span>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Dashboard Statistics</span>
                       <div className="flex items-center space-x-3">
                         <button 
                           onClick={() => setRefreshTrigger(prev => prev + 1)}
@@ -791,7 +807,7 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
                                 <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">현상분류</th>
                                 <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider w-1/3">요약 (Summary)</th>
                                 <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">플랫폼</th>
-                                <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">담당/보고</th>
+                                <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">보고자</th>
                                 <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">생성일</th>
                               </>
                             )}
