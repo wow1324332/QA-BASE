@@ -789,7 +789,7 @@ export const DevicesDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
         className="flex flex-1 overflow-hidden relative bg-[#f0f2f5] bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/project-bg.jpg')" }}
       >
-        <aside className={`bg-white/60 backdrop-blur-xl border-r border-gray-100/50 shadow-[-5px_0_30px_rgba(0,0,0,0.02)] transition-all duration-300 ease-in-out flex flex-col z-10 overflow-hidden whitespace-nowrap ${sidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full'}`}>
+        <aside className={`bg-white/60 backdrop-blur-xl shadow-[-5px_0_30px_rgba(0,0,0,0.02)] transition-all duration-300 ease-in-out flex flex-col z-10 overflow-hidden whitespace-nowrap ${sidebarOpen ? 'w-64' : 'w-0'}`}>
           <div className="p-4 space-y-1 w-64">
             <div className="text-xs font-semibold text-gray-400 tracking-wider mb-4 px-3 mt-2">MENU</div>
             <button onClick={() => onNavigate('board')} className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors"><LayoutDashboard className="w-4 h-4" /><span className="text-sm font-medium">Functional Board</span></button>
@@ -803,8 +803,15 @@ export const DevicesDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
           </div>
         </aside>
 
-        <button onClick={() => setSidebarOpen(!sidebarOpen)} className={`absolute top-6 z-20 bg-white border border-gray-200 shadow-md rounded-full p-1.5 text-gray-600 hover:text-gray-900 transition-all duration-300 ${sidebarOpen ? 'left-[244px]' : 'left-4'}`}>
-          {sidebarOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          {/* 미니멀 시네마틱 폴딩 핸들 (아이콘 및 테두리 제거, 사이즈 축소) */}
+        <button 
+          onClick={() => setSidebarOpen(!sidebarOpen)} 
+          className={`absolute top-1/2 -translate-y-1/2 z-30 flex items-center justify-center transition-all duration-300 ease-in-out group outline-none w-3 h-14 rounded-r-lg backdrop-blur-md shadow-[3px_0_10px_-3px_rgba(0,0,0,0.05)] bg-white/30 hover:bg-white/50 hover:shadow-[4px_0_16px_-4px_rgba(0,0,0,0.1)] ${
+            sidebarOpen ? 'left-[256px]' : 'left-0'
+          }`}
+        >
+          {/* 화살표 없이 정중앙에 위치한 얇은 세로 그립 라인 */}
+          <div className="w-[1.5px] h-5 bg-gray-400/40 rounded-full transition-colors duration-300 group-hover:bg-gray-500/60"></div>
         </button>
 
         <main className={`flex-1 overflow-hidden flex flex-col p-8 transition-all duration-300 ${!sidebarOpen ? 'ml-12' : ''}`}>
