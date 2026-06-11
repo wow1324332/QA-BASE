@@ -828,7 +828,7 @@ export const DevicesDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
                   )}
                   {user?.role !== 'viewer' && (
                     <button onClick={() => { const presetOs = activeMenu === 'android' ? 'Android' : activeMenu === 'ios' ? 'iOS' : 'Android'; setDeviceFormData({ name: '', type: 'Bar', os: presetOs, status: '보관중', serial: '', manufacturer: '', renter: '', customFields: [] }); setShowAddModal(true); }} className="bg-gray-800 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-gray-900 transition-colors shadow-md hover-breath flex items-center">
-                      <Plus className="w-4 h-4 mr-1.5" /> ADD
+                      <Plus className="w-4 h-4 mr-1.5" /> New Device
                     </button>
                   )}
                 </div>
