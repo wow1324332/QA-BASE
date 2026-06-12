@@ -3,10 +3,11 @@ import { createPortal } from 'react-dom';
 import { 
   Bug, Activity, CheckCircle2, AlertCircle, 
   ChevronUp, Equal, ChevronDown as ChevronDownIcon,
-  ChevronLeft, ChevronRight, LayoutDashboard, Server, Kanban, LogOut, Power, User, Plus, MonitorSmartphone, X, Edit, Filter, Search, ExternalLink
+  ChevronLeft, ChevronRight, LayoutDashboard, Server, Kanban, LogOut, Power, User, Plus, MonitorSmartphone, X, Edit, Filter, Search, ExternalLink, Minus, KeyRound, Calendar
 } from 'lucide-react';
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc } from "firebase/firestore";
+import { getFirestore, collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc, getDoc } from "firebase/firestore";
+import { SidebarFavorites } from './SidebarFavorites';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBIsBcW0eBceMAJdhGsKmdNew7vvMPbwB4",
@@ -586,7 +587,10 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
         className="flex flex-1 overflow-hidden relative bg-[#f0f2f5] bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/project-bg.jpg')" }}
       >
-        <aside className={`bg-white/60 backdrop-blur-xl shadow-[-5px_0_30px_rgba(0,0,0,0.02)] transition-all duration-300 ease-in-out flex flex-col z-10 overflow-hidden whitespace-nowrap ${sidebarOpen ? 'w-64' : 'w-0'}`}>
+
+        <aside className={`bg-white/60 backdrop-blur-xl shadow-[-5px_0_30px_rgba(0,0,0,0.02)] transition-all duration-300 ease-in-out flex flex-col justify-between z-10 overflow-hidden whitespace-nowrap ${sidebarOpen ? 'w-64' : 'w-0'}`}>
+          
+          {/* 상단 메인 메뉴 */}
           <div className="p-4 space-y-1 w-64">
             <div className="text-xs font-semibold text-gray-400 tracking-wider mb-4 px-3 mt-2">MENU</div>
             <button onClick={() => onNavigate('board')} className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors"><LayoutDashboard className="w-4 h-4" /><span className="text-sm font-medium">Functional Board</span></button>
@@ -596,6 +600,14 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
               <button onClick={() => { setActiveMenu('epic'); setView('epics'); }} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ml-2 w-[calc(100%-8px)] ${activeMenu === 'epic' ? 'bg-gray-50 text-gray-900 font-medium border border-gray-200 shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}><Kanban className="w-4 h-4" /><span className="text-sm">Project Board</span></button>
             )}
           </div>
+          {/* 하단 퀵링크 (즐겨찾기) 공통 컴포넌트 적용 */}
+          <SidebarFavorites 
+            db={db} 
+            user={user} 
+            onNavigate={onNavigate} 
+            sidebarOpen={sidebarOpen} 
+            currentModule="projects" 
+          />
         </aside>
 
         <button 
