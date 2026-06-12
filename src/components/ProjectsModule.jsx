@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { 
   Bug, Activity, CheckCircle2, AlertCircle, 
   ChevronUp, Equal, ChevronDown as ChevronDownIcon,
-  ChevronLeft, ChevronRight, LayoutDashboard, Server, Kanban, LogOut, Power, User, Plus, MonitorSmartphone, X, Edit, Filter, Search, ExternalLink, Minus, KeyRound, Calendar
+  ChevronLeft, ChevronRight, LayoutDashboard, Server, Kanban, LogOut, Power, User, Plus, MonitorSmartphone, X, Edit, Filter, Search, ExternalLink, Minus, KeyRound, Calendar, Heart
 } from 'lucide-react';
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc, getDoc } from "firebase/firestore";
@@ -292,6 +292,34 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   
   const [activeSpace, setActiveSpace] = useState(null);
   const [activeEpic, setActiveEpic] = useState(null);
+
+  const [favoriteEpics, setFavoriteEpics] = useState([]);
+  const userDocId = user?.email || user?.uid || user?.id || user?.name || 'anonymous_user';
+
+  // 하트(에픽 즐겨찾기) 토글 함수
+  const toggleFavoriteEpic = async (epicKey) => {
+    let newFavs = [...(favoriteEpics || [])]; // 방어 로직 추가
+    if (newFavs.includes(epicKey)) newFavs = newFavs.filter(k => k !== epicKey);
+    else newFavs.push(epicKey);
+
+    setFavoriteEpics(newFavs);
+    if (!user || userDocId === 'anonymous_user') return;
+    try { await setDoc(doc(db, 'user_preferences', userDocId), { favorite_epics: newFavs }, { merge: true }); } 
+    catch (error) { console.error(error); }
+  };
+
+  // 실시간 하트 데이터 불러오기
+  useEffect(() => {
+    if (!user || userDocId === 'anonymous_user') return;
+    const unsubscribe = onSnapshot(doc(db, 'user_preferences', userDocId), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        // 파이어베이스 데이터가 배열이 아닐 경우(undefined 등) 무조건 빈 배열[]로 초기화
+        setFavoriteEpics(Array.isArray(data.favorite_epics) ? data.favorite_epics : []);
+      }
+    });
+    return () => unsubscribe();
+  }, [userDocId, user]);
   
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -318,6 +346,47 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   const [epics, setEpics] = useState([]);
   const [epicModal, setEpicModal] = useState({ isOpen: false, isEdit: false });
   const [epicFormData, setEpicFormData] = useState({ id: '', spaceKey: '', name: '', epicKey: '', status: '예정', progress: 0 });
+
+const [pendingEpicKey, setPendingEpicKey] = useState(null);
+
+    // 1. 사이드바에서 날아온 "OPEN_EPIC" 및 "RESET_PROJECTS" 신호 수신
+    useEffect(() => {
+    // 특정 에픽으로 직행하는 신호
+    const handleOpenEpic = (e) => {
+      setPendingEpicKey(e.detail);
+    };
+
+    // 전체 프로젝트 보드로 초기화하는 신호
+    const handleResetProjects = () => {
+      setActiveSpace(null);
+      setActiveEpic(null);
+      setActiveMenu('space');
+      setView('spaces');
+      setPendingEpicKey(null); // 혹시 모를 대기열도 비움
+    };
+
+    window.addEventListener('OPEN_EPIC', handleOpenEpic);
+    window.addEventListener('RESET_PROJECTS', handleResetProjects);
+
+    return () => {
+      window.removeEventListener('OPEN_EPIC', handleOpenEpic);
+      window.removeEventListener('RESET_PROJECTS', handleResetProjects);
+    };
+  }, []);
+
+  // 2. 대기열에 목적지가 있고 & 파이어베이스 데이터(epics) 로딩이 완료되면 즉시 화면 전환!
+  useEffect(() => {
+    if (pendingEpicKey && epics.length > 0) {
+      const targetEpic = epics.find(ep => ep.epicKey === pendingEpicKey);
+      if (targetEpic) {
+        setActiveSpace(targetEpic.spaceKey);
+        setActiveMenu('epic');
+        setView('issues');
+        setActiveEpic(targetEpic.epicKey);
+        setPendingEpicKey(null); // 안전하게 이동 후 대기열 비우기
+      }
+    }
+  }, [pendingEpicKey, epics]);
 
   const currentSpaceData = spaces.find(s => s.epicKey === activeSpace);
   const isType2 = currentSpaceData?.spaceType === 'Type 2';
@@ -680,14 +749,29 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
               <div className="grid grid-cols-3 gap-6 overflow-y-auto no-scrollbar pb-6">
                 {filteredEpics.length > 0 ? filteredEpics.map(epic => (
                   <div key={epic.id} onClick={() => { setActiveEpic(epic.epicKey); setView('issues'); }} className="bg-white rounded-2xl p-6 border border-gray-200 shadow-md cursor-pointer hover-breath group relative">
+                    {/* 1. 수정 버튼 (원래대로 우측 상단 배치, 마우스 오버 시에만 노출) */}
                     <div className="absolute top-5 right-5 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                      <button onClick={(e) => { e.stopPropagation(); setEpicFormData(epic); setEpicModal({isOpen: true, isEdit: true}); }} className="p-1.5 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors border border-gray-200 shadow-sm"><Edit className="w-4 h-4"/></button>
+                      <button onClick={(e) => { e.stopPropagation(); setEpicFormData(epic); setEpicModal({isOpen: true, isEdit: true}); }} className="p-1.5 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors border border-gray-200 shadow-sm">
+                        <Edit className="w-4 h-4"/>
+                      </button>
                     </div>
+
+                    {/* 2. 상태 뱃지 & 에픽 키 (우측 간격 원래대로 복구) */}
                     <div className="flex justify-between items-start mb-4 pr-10">
                       <span className={`text-[10px] px-2 py-1 rounded-md border font-bold ${epic.status === '완료' ? 'bg-green-50 text-green-600 border-green-100' : epic.status === '진행중' ? 'bg-blue-50 text-blue-600 border-blue-100' : epic.status === 'HOLD' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-gray-50 text-gray-600 border-gray-100'}`}>{epic.status}</span>
                       <span className="text-xs font-bold text-gray-400">{epic.epicKey}</span>
                     </div>
-                    <h3 className="text-lg font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors truncate" title={epic.name}>{epic.name}</h3>
+                    
+                    {/* 3. 프로젝트명 + 테두리 없는 시네마틱 체크 버튼 나란히 배치 */}
+                    <div className="flex items-center mb-2">
+                      <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors truncate" title={epic.name}>{epic.name}</h3>
+                      <button onClick={(e) => { e.stopPropagation(); toggleFavoriteEpic(epic.epicKey); }} className="ml-2 flex items-center justify-center transition-transform hover:scale-110 active:scale-95 focus:outline-none">
+                        <CheckCircle2 
+                          className={`w-[18px] h-[18px] transition-all duration-300 ${(favoriteEpics || []).includes(epic.epicKey) ? 'text-blue-600 fill-blue-50 drop-shadow-sm' : 'text-gray-300 hover:text-blue-400'}`} 
+                          strokeWidth={2.5} 
+                        />
+                      </button>
+                    </div>
                     <div className="w-full bg-gray-100 rounded-full h-1.5 mb-2 mt-4"><div className="bg-blue-500 h-1.5 rounded-full transition-all duration-1000" style={{width: `${epic.progress || 0}%`}}></div></div>
                     <div className="flex justify-between text-xs font-medium text-gray-500">
                       <span>결함 추적 중</span><span>{epic.progress || 0}% 완료</span>
