@@ -126,20 +126,38 @@ export const CustomDatePicker = ({ value, onChange, disabled, alignRight }) => {
 };
 
 export const SplashScreen = ({ onComplete }) => {
+  const [progress, setProgress] = useState(0);
+  const [isExiting, setIsExiting] = useState(false);
+
   useEffect(() => {
-    const timer = setTimeout(onComplete, 3000);
-    return () => clearTimeout(timer);
+    const progressTimer = setTimeout(() => setProgress(100), 100);
+    // ✨ 2.4초부터 퇴장(가라앉으며 흐려짐) 시작
+    const exitTimer = setTimeout(() => setIsExiting(true), 2400);
+    const completeTimer = setTimeout(onComplete, 3000);
+    return () => {
+      clearTimeout(progressTimer);
+      clearTimeout(exitTimer);
+      clearTimeout(completeTimer);
+    };
   }, [onComplete]);
 
   return (
-    <div className="w-screen h-screen bg-cinematic flex flex-col items-center justify-center animate-simple-fade">
-      <div className="animate-fade-in flex flex-col items-center">
-        <AppLogo className="w-32 h-32 mb-6 relative z-10" />
-        <h1 className="text-4xl font-light tracking-widest text-gray-800 mb-2">QA BASE</h1>
-        <p className="text-sm text-gray-500 tracking-wider">Quality Assurance Command Center</p>
-        <div className="w-48 h-1 bg-gray-200 rounded-full mt-12 overflow-hidden">
-          <div className="h-full bg-gray-600 rounded-full w-full origin-left animate-[scaleX_3s_ease-in-out]"></div>
+    <div className="w-screen h-screen bg-[url('/login-bg.jpg')] bg-cover bg-center flex items-center justify-end pr-8 md:pr-16 lg:pr-24 relative overflow-hidden">
+      
+      {/* ✨ 퇴장 애니메이션: opacity-0, translate-y-4(아래로 이동), blur-sm(흐려짐) */}
+      <div className={`relative w-full max-w-[320px] z-10 flex flex-col items-center justify-center transition-all duration-700 ease-out ${isExiting ? 'opacity-0 translate-y-4 blur-sm' : 'opacity-100 translate-y-0 blur-0'}`}>
+        
+        <AppLogo className="w-28 h-28 mb-6 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]" />
+        <h1 className="text-3xl font-bold tracking-widest text-white mb-2 drop-shadow-md">QA BASE</h1>
+        <p className="text-[10px] text-blue-200 tracking-widest font-medium opacity-80 uppercase">Quality Assurance Command Center</p>
+        
+        <div className="w-full max-w-[200px] h-1 bg-white/10 rounded-full mt-12 overflow-hidden shadow-inner relative border border-white/5">
+          <div 
+            className="absolute top-0 left-0 h-full bg-blue-500 rounded-full shadow-[0_0_12px_rgba(59,130,246,0.9)] transition-all ease-out"
+            style={{ width: `${progress}%`, transitionDuration: '2800ms' }}
+          ></div>
         </div>
+        
       </div>
     </div>
   );
