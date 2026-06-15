@@ -79,7 +79,7 @@ export const FunctionalBoard = ({ user, onNavigate, onLogout, onShowProfileModal
               onClick={() => onNavigate('dashboard')}
               className="relative overflow-hidden bg-white/80 backdrop-blur-sm rounded-3xl p-8 cursor-pointer shadow-md hover-breath group"
             >
-              <div className="absolute inset-0 bg-[url('/Functioncard.jpg')] bg-cover bg-center opacity-[0.2] mix-blend-multiply transition-opacity duration-500 group-hover:opacity-[0.3] pointer-events-none"></div>
+              <div className="absolute inset-0 bg-[url('/Functioncard.jpg')] bg-cover bg-center opacity-[0.3] mix-blend-multiply transition-opacity duration-500 group-hover:opacity-[0.3] pointer-events-none"></div>
               
               <div className="relative z-10">
                 {/* 👇 아이콘 박스의 border 관련 속성을 제거했습니다. */}
@@ -98,7 +98,7 @@ export const FunctionalBoard = ({ user, onNavigate, onLogout, onShowProfileModal
               onClick={() => onNavigate('schedule')}
               className="relative overflow-hidden bg-white/80 backdrop-blur-sm rounded-3xl p-8 cursor-pointer shadow-md hover-breath group"
             >
-              <div className="absolute inset-0 bg-[url('/Functioncard.jpg')] bg-cover bg-center opacity-[0.2] mix-blend-multiply transition-opacity duration-500 group-hover:opacity-[0.3] pointer-events-none"></div>
+              <div className="absolute inset-0 bg-[url('/Functioncard.jpg')] bg-cover bg-center opacity-[0.3] mix-blend-multiply transition-opacity duration-500 group-hover:opacity-[0.3] pointer-events-none"></div>
               
               <div className="relative z-10">
                 {/* 👇 아이콘 박스 테두리 제거 */}
@@ -117,7 +117,7 @@ export const FunctionalBoard = ({ user, onNavigate, onLogout, onShowProfileModal
               onClick={() => onNavigate('projects')}
               className="relative overflow-hidden bg-white/80 backdrop-blur-sm rounded-3xl p-8 cursor-pointer shadow-md hover-breath group"
             >
-              <div className="absolute inset-0 bg-[url('/Functioncard.jpg')] bg-cover bg-center opacity-[0.2] mix-blend-multiply transition-opacity duration-500 group-hover:opacity-[0.3] pointer-events-none"></div>
+              <div className="absolute inset-0 bg-[url('/Functioncard.jpg')] bg-cover bg-center opacity-[0.3] mix-blend-multiply transition-opacity duration-500 group-hover:opacity-[0.3] pointer-events-none"></div>
               
               <div className="relative z-10">
                 {/* 👇 아이콘 박스 테두리 제거 */}
@@ -138,7 +138,7 @@ export const FunctionalBoard = ({ user, onNavigate, onLogout, onShowProfileModal
               onClick={() => onNavigate('accounts')}
               className="relative overflow-hidden bg-white/80 backdrop-blur-sm rounded-3xl p-8 cursor-pointer shadow-md hover-breath group"
             >
-              <div className="absolute inset-0 bg-[url('/Functioncard.jpg')] bg-cover bg-center opacity-[0.2] mix-blend-multiply transition-opacity duration-500 group-hover:opacity-[0.3] pointer-events-none"></div>
+              <div className="absolute inset-0 bg-[url('/Functioncard.jpg')] bg-cover bg-center opacity-[0.3] mix-blend-multiply transition-opacity duration-500 group-hover:opacity-[0.3] pointer-events-none"></div>
               
               <div className="relative z-10">
                 {/* 👇 아이콘 박스 테두리 제거 */}
