@@ -186,7 +186,7 @@ export const TransitionLoading = ({ title, onComplete }) => {
         return {
           mainTitle: 'DEVICES',
           description: (
-            <>Centralized Device Management. <br />Monitoring hardware status <br />and resource allocation.</>
+            <>복잡한 디바이스 관리. <br />한눈에 파악하고 한눈에 정리하세요. <br />쉽고 빠르게 기록하고 관리하자!</>
           )
         };
       case 'Schedule Manager':
