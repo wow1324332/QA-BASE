@@ -164,18 +164,98 @@ export const SplashScreen = ({ onComplete }) => {
 };
 
 export const TransitionLoading = ({ title, onComplete }) => {
+  const [progress, setProgress] = useState(0);
+  const [isExiting, setIsExiting] = useState(false);
+
   useEffect(() => {
-    const timer = setTimeout(onComplete, 1500);
-    return () => clearTimeout(timer);
+    const progressTimer = setTimeout(() => setProgress(100), 50);
+    const exitTimer = setTimeout(() => setIsExiting(true), 2000);
+    const completeTimer = setTimeout(onComplete, 2400);
+
+    return () => {
+      clearTimeout(progressTimer);
+      clearTimeout(exitTimer);
+      clearTimeout(completeTimer);
+    };
   }, [onComplete]);
 
+  // ✨ 넘어가는 목적지(title)에 따라 타이틀과 설명 문구를 다르게 반환하는 함수
+  const getScreenContent = () => {
+    switch (title) {
+      case 'Devices Dashboard':
+        return {
+          mainTitle: 'DEVICES',
+          description: (
+            <>Centralized Device Management. <br />Monitoring hardware status <br />and resource allocation.</>
+          )
+        };
+      case 'Schedule Manager':
+        return {
+          mainTitle: 'SCHEDULE',
+          description: (
+            <>Strategic Schedule Coordination. <br />Tracking project timelines <br />and milestone synchronizations.</>
+          )
+        };
+      case 'Projects Board':
+        return {
+          mainTitle: 'PROJECTS',
+          description: (
+            <>Comprehensive Project Tracking. <br />Visualizing issue lifecycles <br />and epic progressions.</>
+          )
+        };
+      case 'Accounts Vault':
+        return {
+          mainTitle: 'ACCOUNTS',
+          description: (
+            <>Encrypted Credential Management. <br />Securing test accounts <br />and access privileges.</>
+          )
+        };
+      case 'Functional Board':
+      default:
+        return {
+          mainTitle: 'QA BASE',
+          description: (
+            <>Advanced Quality Assurance Platform. <br />Synchronizing functional modules <br />and empowering operational efficiency.</>
+          )
+        };
+    }
+  };
+
+  const { mainTitle, description } = getScreenContent();
+
   return (
-    <div className="w-screen h-screen bg-[#f8f9fa] flex flex-col items-center justify-center animate-simple-fade absolute inset-0 z-50">
-      <div className="w-16 h-16 relative">
-        <div className="absolute inset-0 border-2 border-gray-200 rounded-full shadow-inner"></div>
-        <div className="absolute inset-0 border-2 border-gray-800 rounded-full border-t-transparent animate-spin"></div>
+    <div className="w-screen h-screen bg-[url('/board-loading-bg.jpg')] bg-cover bg-center fixed inset-0 z-[100] overflow-hidden animate-fade-in opacity-100">
+
+      <div className={`absolute inset-0 z-20 transition-all duration-400 ease-out flex ${isExiting ? 'opacity-0 -translate-y-4 blur-sm' : 'opacity-100 translate-y-0 blur-0'}`}>
+        
+        <div className="absolute left-[25%] md:left-[30%] top-1/2 -translate-y-1/2 flex flex-col items-start w-full max-w-2xl px-8">
+          {/* ✨ 동적으로 변하는 메인 타이틀 */}
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-[0.2em] text-white/90 drop-shadow-md mb-4 flex items-end">
+            {mainTitle}
+            <span className="animate-pulse text-3xl ml-1">...</span>
+          </h1>
+          {/* ✨ 동적으로 변하는 설명 문구 */}
+          <p className="text-xs md:text-sm text-gray-300 tracking-widest font-light leading-relaxed border-l-2 border-white/20 pl-4 py-1">
+            {description}
+          </p>
+          <p className="mt-8 text-[10px] md:text-xs text-gray-400/80 tracking-[0.3em] uppercase animate-pulse">
+            {title} / Initializing...
+          </p>
+        </div>
+
+        <div className="absolute bottom-[32%] md:bottom-[35%] left-0 w-full px-12 md:px-32 lg:px-[20%] flex flex-col items-center">
+          <div className="w-full h-1 bg-black/40 relative overflow-hidden shadow-inner backdrop-blur-sm border-b border-white/5 rounded-full">
+            <div 
+              className="absolute top-0 left-0 h-full bg-gradient-to-r from-gray-500 via-white to-gray-200 shadow-[0_0_12px_rgba(255,255,255,0.8)] rounded-full"
+              style={{ 
+                width: `${progress}%`, 
+                transition: 'width 2.0s cubic-bezier(0.25, 1, 0.5, 1)' 
+              }}
+            ></div>
+          </div>
+        </div>
+        
       </div>
-      <p className="mt-6 text-sm text-gray-500 tracking-widest uppercase animate-pulse">{title} 로딩중...</p>
     </div>
   );
 };
