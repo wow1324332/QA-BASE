@@ -193,21 +193,21 @@ export const TransitionLoading = ({ title, onComplete }) => {
         return {
           mainTitle: 'SCHEDULE',
           description: (
-            <>Strategic Schedule Coordination. <br />Tracking project timelines <br />and milestone synchronizations.</>
+            <>QA 스케쥴 관리를 한눈에 파악하자. <br />빠르고 간단한 일정 관리. <br />QA Base에서 일정 관리하세요!</>
           )
         };
       case 'Projects Board':
         return {
           mainTitle: 'PROJECTS',
           description: (
-            <>Comprehensive Project Tracking. <br />Visualizing issue lifecycles <br />and epic progressions.</>
+            <>JIRA api 연동으로 이슈를 실시간 관리 하세요! <br />대량의 이슈 처리도 한눈에 편리하게! <br />지금 프로젝트를 만들고 관리해보세요!.</>
           )
         };
       case 'Accounts Vault':
         return {
           mainTitle: 'ACCOUNTS',
           description: (
-            <>Encrypted Credential Management. <br />Securing test accounts <br />and access privileges.</>
+            >엉성한 계정 관리는 이제 그만! <br />철저한 보안으로 계정을 관리하세요. <br />QA Base로 쉽고 간편하게 계정을 관리하자!</>
           )
         };
       case 'Functional Board':
@@ -215,7 +215,7 @@ export const TransitionLoading = ({ title, onComplete }) => {
         return {
           mainTitle: 'QA BASE',
           description: (
-            <>Advanced Quality Assurance Platform. <br />Synchronizing functional modules <br />and empowering operational efficiency.</>
+            <>QA Base로 검증을 업그레이드 해보자!. <br />다중 플랫폼의 고충을 덜어내, <br />검증 진행의 속도도 Up! 효율도 Up!.</>
           )
         };
     }
