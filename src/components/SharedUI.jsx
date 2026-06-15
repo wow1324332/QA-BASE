@@ -207,7 +207,7 @@ export const TransitionLoading = ({ title, onComplete }) => {
         return {
           mainTitle: 'ACCOUNTS',
           description: (
-            >엉성한 계정 관리는 이제 그만! <br />철저한 보안으로 계정을 관리하세요. <br />QA Base로 쉽고 간편하게 계정을 관리하자!</>
+            <>엉성한 계정 관리는 이제 그만! <br />철저한 보안으로 계정을 관리하세요. <br />QA Base로 쉽고 간편하게 계정을 관리하자!</>
           )
         };
       case 'Functional Board':
