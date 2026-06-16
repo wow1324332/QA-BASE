@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Download, X, User, Upload, ShieldCheck } from 'lucide-react';
-import { doc, getDoc, setDoc, updateDoc, collection, query, where, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, collection, query, where, onSnapshot, deleteDoc } from "firebase/firestore";
 import { db } from '../firebaseConfig';
 import { AppLogo } from './SharedUI';
 
@@ -200,6 +200,16 @@ export const AdminModal = ({ onClose }) => {
       await updateDoc(userRef, { role: 'user', status: 'approved' });
     } catch(err) {
       console.error("Error approving user", err);
+    }
+  };
+
+  const handleReject = async (userId) => {
+    if (!window.confirm("가입 신청을 거절하고 삭제하시겠습니까?")) return;
+    try {
+      const userRef = doc(db, 'users', userId);
+      await deleteDoc(userRef); // users 컬렉션에서 해당 유저 데이터 삭제
+    } catch(err) {
+      console.error("Error rejecting user", err);
     }
   };
 
