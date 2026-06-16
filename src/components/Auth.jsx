@@ -233,7 +233,20 @@ export const AdminModal = ({ onClose }) => {
                     <div className="text-sm font-medium text-gray-800 truncate max-w-[120px]" title={u.name}>{u.name}</div>
                     <div className="text-xs text-gray-400 truncate max-w-[120px]" title={u.id}>{u.id}</div>
                   </div>
-                  <button onClick={() => handleApprove(u.id)} className="bg-gray-800 text-white text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-gray-900 transition-colors shadow-sm">승인</button>
+                  <div className="flex space-x-2">
+                    <button 
+                      onClick={() => handleReject(u.id)} 
+                      className="bg-red-50 text-red-600 border border-red-100 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors shadow-sm"
+                    >
+                      거절
+                    </button>
+                    <button 
+                      onClick={() => handleApprove(u.id)} 
+                      className="bg-gray-800 text-white text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-gray-900 transition-colors shadow-sm"
+                    >
+                      승인
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
