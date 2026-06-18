@@ -181,7 +181,7 @@ export const FunctionalBoard = ({ user, onNavigate, onLogout, onShowProfileModal
                 <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-6 group-hover:bg-gray-800 transition-colors duration-500 shadow-sm">
                   <BookOpen className="w-6 h-6 text-gray-600 group-hover:text-white transition-colors duration-500" strokeWidth={1.5} />
                 </div>
-                <h3 className="text-xl font-medium text-gray-800 mb-2">Knowledge Base</h3>
+                <h3 className="text-xl font-medium text-gray-800 mb-2">Board</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">
                   사내 지식 자산, QA 가이드 및<br/>기술 문서를 체계적으로 관리하세요.
                 </p>
