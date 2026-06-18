@@ -218,6 +218,20 @@ export const TransitionLoading = ({ title, onComplete }) => {
             <>QA Base로 검증을 업그레이드 해보자!. <br />다중 플랫폼의 고충을 덜어내, <br />검증 진행의 속도도 Up! 효율도 Up!.</>
           )
         };
+        case 'Board Dashboard':  {/* 💡 참고: 앱에서 넘겨주는 실제 타이틀 이름과 똑같이 맞춰주세요 */}
+        return {
+          mainTitle: 'BOARD',
+          description: (
+            <>팀의 지식과 가이드를 체계적으로 관리하세요. <br />다양한 카테고리로 문서를 분류하고 <br />팀원들과 핵심 정보를 공유해보세요!</>
+          )
+        };
+        case 'Memo Manager':     {/* 💡 참고: 앱에서 넘겨주는 실제 타이틀 이름과 똑같이 맞춰주세요 (예: Memo Dashboard 등) */}
+        return {
+          mainTitle: 'MEMO',
+          description: (
+            <>번뜩이는 아이디어와 중요 사항을 기록하세요. <br />언제 어디서든 쉽고 빠르게 메모하고 <br />업무 효율을 극대화해보세요!</>
+          )
+        };
     }
   };
 
