@@ -180,9 +180,11 @@ export const TransitionLoading = ({ title, onComplete }) => {
   }, [onComplete]);
 
   // ✨ 넘어가는 목적지(title)에 따라 타이틀과 설명 문구를 다르게 반환하는 함수
+// ✨ 넘어가는 목적지(title)에 따라 타이틀과 설명 문구를 다르게 반환하는 함수
   const getScreenContent = () => {
     switch (title) {
       case 'Devices Dashboard':
+      case 'devices':
         return {
           mainTitle: 'DEVICES',
           description: (
@@ -190,6 +192,7 @@ export const TransitionLoading = ({ title, onComplete }) => {
           )
         };
       case 'Schedule Manager':
+      case 'schedule':
         return {
           mainTitle: 'SCHEDULE',
           description: (
@@ -197,6 +200,7 @@ export const TransitionLoading = ({ title, onComplete }) => {
           )
         };
       case 'Projects Board':
+      case 'projects':
         return {
           mainTitle: 'PROJECTS',
           description: (
@@ -204,32 +208,38 @@ export const TransitionLoading = ({ title, onComplete }) => {
           )
         };
       case 'Accounts Vault':
+      case 'accounts':
         return {
           mainTitle: 'ACCOUNTS',
           description: (
             <>엉성한 계정 관리는 이제 그만! <br />철저한 보안으로 계정을 관리하세요. <br />QA Base로 쉽고 간편하게 계정을 관리하자!</>
           )
         };
-      case 'Functional Board':
-      default:
-        return {
-          mainTitle: 'QA BASE',
-          description: (
-            <>QA Base로 검증을 업그레이드 해보자!. <br />다중 플랫폼의 고충을 덜어내, <br />검증 진행의 속도도 Up! 효율도 Up!.</>
-          )
-        };
-        case 'Board Dashboard':  {/* 💡 참고: 앱에서 넘겨주는 실제 타이틀 이름과 똑같이 맞춰주세요 */}
+      // ✅ 추가된 보드 기능 (짧은 ID와 긴 이름 모두 방어)
+      case 'Board Dashboard':
+      case 'board':
         return {
           mainTitle: 'BOARD',
           description: (
             <>팀의 지식과 가이드를 체계적으로 관리하세요. <br />다양한 카테고리로 문서를 분류하고 <br />팀원들과 핵심 정보를 공유해보세요!</>
           )
         };
-        case 'Memo Manager':     {/* 💡 참고: 앱에서 넘겨주는 실제 타이틀 이름과 똑같이 맞춰주세요 (예: Memo Dashboard 등) */}
+      // ✅ 추가된 메모 기능 (짧은 ID와 긴 이름 모두 방어)
+      case 'Memo Manager':
+      case 'memo':
         return {
           mainTitle: 'MEMO',
           description: (
             <>번뜩이는 아이디어와 중요 사항을 기록하세요. <br />언제 어디서든 쉽고 빠르게 메모하고 <br />업무 효율을 극대화해보세요!</>
+          )
+        };
+      case 'Functional Board':
+      default:
+        // ✅ 못 찾는 이름이 들어오면 무조건 이 기본값이 뜹니다 (반드시 맨 아래 위치)
+        return {
+          mainTitle: 'QA BASE',
+          description: (
+            <>QA Base로 검증을 업그레이드 해보자!. <br />다중 플랫폼의 고충을 덜어내, <br />검증 진행의 속도도 Up! 효율도 Up!.</>
           )
         };
     }
