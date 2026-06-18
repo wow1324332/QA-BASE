@@ -8,6 +8,7 @@ import { ScheduleDashboard } from './components/ScheduleModule';
 import { ProjectsDashboard } from './components/ProjectsModule';
 import { AccountsDashboard } from './components/AccountsModule';
 import { MemoDashboard } from './components/MemoModule';
+import { BoardDashboard } from './components/BoardDashboard';
 
 export default function App() {
   const [screen, setScreen] = useState(() => {
@@ -95,6 +96,9 @@ export default function App() {
 
       {screen === 'loading_memo' && <TransitionLoading title="Quick Memos" onComplete={() => setScreen('memo')} />}
       {screen === 'memo' && <MemoDashboard user={user} onNavigate={(target) => setScreen(target === 'board' ? 'loadingBoard' : target)} onLogout={() => { setUser(null); setScreen('login'); }} onQuit={() => { setUser(null); setScreen('splash'); }} />}
+
+      {screen === 'loading_knowledge' && <TransitionLoading title="Knowledge Base" onComplete={() => setScreen('knowledge')} />}
+      {screen === 'knowledge' && <BoardDashboard user={user} onNavigate={(target) => setScreen(target === 'board' ? 'loadingBoard' : target)} onLogout={() => { setUser(null); setScreen('login'); }} onQuit={() => { setUser(null); setScreen('splash'); }} />}
       
       {showProfileModal && user && <ProfileModal user={user} onClose={() => setShowProfileModal(false)} onUpdateProfile={(image) => setUser({...user, profileImage: image})} />}
       {showAdminModal && <AdminModal onClose={() => setShowAdminModal(false)} />}
