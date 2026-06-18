@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Server, Calendar, User, Kanban, Plus, Minus, KeyRound, ChevronRight } from 'lucide-react';
+import { Server, Calendar, User, Kanban, Plus, Minus, KeyRound, ChevronRight, StickyNote, LayoutDashboard } from 'lucide-react';
 import { doc, onSnapshot, setDoc, collection } from 'firebase/firestore';
 
 export const SidebarFavorites = ({ db, user, onNavigate, sidebarOpen, currentModule }) => {
@@ -7,7 +7,9 @@ export const SidebarFavorites = ({ db, user, onNavigate, sidebarOpen, currentMod
     { id: 'dashboard', label: 'Device Manager', icon: Server },
     { id: 'schedule', label: 'QA Calendar', icon: Calendar },
     { id: 'accounts', label: 'Account Vault', icon: KeyRound },
-    { id: 'projects', label: 'Project Board', icon: Kanban } 
+    { id: 'projects', label: 'Project Board', icon: Kanban },
+    { id: 'memo', label: 'Memo Manager', icon: StickyNote },
+    { id: 'knowledge', label: 'Board Dashboard', icon: LayoutDashboard }
   ];
 
   const [favorites, setFavorites] = useState([]);
