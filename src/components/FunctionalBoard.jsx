@@ -163,7 +163,7 @@ export const FunctionalBoard = ({ user, onNavigate, onLogout, onShowProfileModal
                 <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-6 group-hover:bg-gray-800 transition-colors duration-500 shadow-sm">
                   <StickyNote className="w-6 h-6 text-gray-600 group-hover:text-white transition-colors duration-500" strokeWidth={1.5} />
                 </div>
-                <h3 className="text-xl font-medium text-gray-800 mb-2">Quick Memos</h3>
+                <h3 className="text-xl font-medium text-gray-800 mb-2">Memos</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">
                   테스트 임시 데이터와 개인적인<br/>아이디어들을 가볍게 메모하세요.
                 </p>
