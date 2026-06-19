@@ -216,7 +216,7 @@ export const TransitionLoading = ({ title, onComplete }) => {
           )
         };
       // ✅ 추가된 보드 기능 (짧은 ID와 긴 이름 모두 방어)
-      case 'Board Dashboard':
+      case 'Knowledge Base':
       case 'knowledge':
         return {
           mainTitle: 'BOARD',
@@ -225,7 +225,7 @@ export const TransitionLoading = ({ title, onComplete }) => {
           )
         };
       // ✅ 추가된 메모 기능 (짧은 ID와 긴 이름 모두 방어)
-      case 'Memo Manager':
+      case 'Quick Memos':
       case 'memo':
         return {
           mainTitle: 'MEMO',
