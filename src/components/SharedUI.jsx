@@ -217,7 +217,7 @@ export const TransitionLoading = ({ title, onComplete }) => {
         };
       // ✅ 추가된 보드 기능 (짧은 ID와 긴 이름 모두 방어)
       case 'Board Dashboard':
-      case 'board':
+      case 'knowledge':
         return {
           mainTitle: 'BOARD',
           description: (
