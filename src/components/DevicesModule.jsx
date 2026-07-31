@@ -602,8 +602,7 @@ export const DevicesDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   const [osFilter, setOsFilter] = useState('All');
   const [typeFilter, setTypeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All'); 
-  const [searchRenter, setSearchRenter] = useState('');
-  const [searchManufacturer, setSearchManufacturer] = useState('');
+  const [searchDeviceInput, setSearchDeviceInput] = useState('');
 
   const [filterCarrier, setFilterCarrier] = useState('All');
   const [filterUsimStatus, setFilterUsimStatus] = useState('All');
@@ -714,8 +713,19 @@ export const DevicesDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
     if (activeMenu === 'dashboard' && osFilter !== 'All' && d.os !== osFilter) return false;
     if (typeFilter !== 'All' && d.type !== typeFilter) return false;
     if (statusFilter !== 'All' && d.status !== statusFilter) return false;
-    if (searchRenter && !d.renter?.toLowerCase().includes(searchRenter.toLowerCase())) return false;
-    if (searchManufacturer && !d.manufacturer?.toLowerCase().includes(searchManufacturer.toLowerCase())) return false;
+
+    // 통합 검색 로직 적용
+    if (searchDeviceInput) {
+      const term = searchDeviceInput.toLowerCase();
+      const inName = d.name?.toLowerCase().includes(term);
+      const inManufacturer = d.manufacturer?.toLowerCase().includes(term);
+      const inRenter = d.renter?.toLowerCase().includes(term);
+      const inType = d.type?.toLowerCase().includes(term);
+      const inOs = d.os?.toLowerCase().includes(term);
+      const inSerial = d.serial?.toLowerCase().includes(term);
+
+      if (!inName && !inManufacturer && !inRenter && !inType && !inOs && !inSerial) return false;
+    }
     return true;
   });
 
@@ -875,10 +885,37 @@ export const DevicesDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
                   </div>
                 </div>
                 <div className="flex items-center space-x-3 pt-3 border-t border-gray-100">
-                  <input type="text" placeholder="제조사 검색..." value={searchManufacturer} onChange={e=>setSearchManufacturer(e.target.value)} className="text-xs bg-gray-50 border border-gray-200 rounded-md px-3 py-1.5 outline-none focus:border-gray-400 transition-colors w-32 placeholder:text-gray-400" />
-                  <input type="text" placeholder="사용/대여자 검색..." value={searchRenter} onChange={e=>setSearchRenter(e.target.value)} className="text-xs bg-gray-50 border border-gray-200 rounded-md px-3 py-1.5 outline-none focus:border-gray-400 transition-colors w-32 placeholder:text-gray-400" />
-                  {(statusFilter !== 'All' || osFilter !== 'All' || typeFilter !== 'All' || searchManufacturer || searchRenter) && (
-                    <button onClick={() => { setStatusFilter('All'); setOsFilter('All'); setTypeFilter('All'); setSearchManufacturer(''); setSearchRenter(''); }} className="text-[10px] text-gray-500 hover:text-gray-800 underline ml-2 font-medium">초기화</button>
+                  <div className="flex items-center bg-gray-50 border border-gray-200 rounded-md px-3 py-1.5 transition-colors focus-within:border-gray-400 relative flex-1 max-w-sm">
+                    <Search className="w-3.5 h-3.5 text-gray-400 mr-2 shrink-0" />
+                    <input 
+                      type="text" 
+                      placeholder="단말기명, 대여자, 제조사, 시리얼 등 통합 검색..." 
+                      value={searchDeviceInput} 
+                      onChange={e => setSearchDeviceInput(e.target.value)} 
+                      className="text-xs bg-transparent outline-none w-full placeholder:text-gray-400 text-gray-700 pr-6" 
+                    />
+                    {searchDeviceInput && (
+                      <button 
+                        onClick={() => setSearchDeviceInput('')} 
+                        className="absolute right-2 p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full transition-colors flex items-center justify-center"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                  
+                  {(statusFilter !== 'All' || osFilter !== 'All' || typeFilter !== 'All' || searchDeviceInput) && (
+                    <button 
+                      onClick={() => { 
+                        setStatusFilter('All'); 
+                        setOsFilter('All'); 
+                        setTypeFilter('All'); 
+                        setSearchDeviceInput(''); 
+                      }} 
+                      className="text-[10px] text-gray-500 hover:text-gray-800 underline ml-2 font-medium whitespace-nowrap"
+                    >
+                      초기화
+                    </button>
                   )}
                 </div>
               </div>
