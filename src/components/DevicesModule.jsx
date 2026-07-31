@@ -903,20 +903,6 @@ export const DevicesDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
                       </button>
                     )}
                   </div>
-                  
-                  {(statusFilter !== 'All' || osFilter !== 'All' || typeFilter !== 'All' || searchDeviceInput) && (
-                    <button 
-                      onClick={() => { 
-                        setStatusFilter('All'); 
-                        setOsFilter('All'); 
-                        setTypeFilter('All'); 
-                        setSearchDeviceInput(''); 
-                      }} 
-                      className="text-[10px] text-gray-500 hover:text-gray-800 underline ml-2 font-medium whitespace-nowrap"
-                    >
-                      초기화
-                    </button>
-                  )}
                 </div>
               </div>
 
