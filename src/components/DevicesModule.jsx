@@ -889,7 +889,7 @@ export const DevicesDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
                     <Search className="w-3.5 h-3.5 text-gray-400 mr-2 shrink-0" />
                     <input 
                       type="text" 
-                      placeholder="단말기명, 대여자, 제조사, 시리얼 등 통합 검색..." 
+                      placeholder="통합 검색..." 
                       value={searchDeviceInput} 
                       onChange={e => setSearchDeviceInput(e.target.value)} 
                       className="text-xs bg-transparent outline-none w-full placeholder:text-gray-400 text-gray-700 pr-6" 
