@@ -904,8 +904,10 @@ const [pendingEpicKey, setPendingEpicKey] = useState(null);
                             <DetailedStatCard title="상태별 통계" icon={Activity} total={totalIssues} data={statusCounts} colorMap={statusColorMap} defaultColor="bg-blue-400" />
                           </div>
                           <div className="flex-1">
-                            {isType2 ? (
+                            {isRealType2 ? (
                               <DetailedStatCard title="보고자별 통계" icon={User} total={totalIssues} data={reporterCounts} colorMap={{}} defaultColor="bg-indigo-400" />
+                            ) : isType3 ? (
+                              <DetailedStatCard title="플랫폼 유형별 통계" icon={Server} total={totalIssues} data={platformCounts} colorMap={platformColorMap} defaultColor="bg-purple-400" />
                             ) : (
                               <DetailedStatCard title="플랫폼별 통계" icon={Server} total={totalIssues} data={platformCounts} colorMap={platformColorMap} defaultColor="bg-purple-400" />
                             )}
