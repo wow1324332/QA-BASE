@@ -424,12 +424,13 @@ const [pendingEpicKey, setPendingEpicKey] = useState(null);
   // 2. 대기열에 목적지가 있고 & 파이어베이스 데이터(epics) 로딩이 완료되면 즉시 화면 전환!
   useEffect(() => {
     if (pendingEpicKey && epics.length > 0) {
-      const targetEpic = epics.find(ep => ep.epicKey === pendingEpicKey);
+      // ✨ 중복 오류 방지: DB 고유값(id)으로 정확한 프로젝트를 찾아냅니다.
+      const targetEpic = epics.find(ep => ep.id === pendingEpicKey || ep.epicKey === pendingEpicKey);
       if (targetEpic) {
         setActiveSpace(targetEpic.spaceKey);
         setActiveMenu('epic');
         setView('issues');
-        setActiveEpic(targetEpic.epicKey);
+        setActiveEpic(targetEpic.epicKey); // JIRA API를 위해 키값 유지
         setPendingEpicKey(null); // 안전하게 이동 후 대기열 비우기
       }
     }
@@ -828,9 +829,9 @@ const hasFilters = filterStatus !== 'All' || filterPriority !== 'All' || filterR
                     {/* 3. 프로젝트명 + 테두리 없는 시네마틱 체크 버튼 나란히 배치 */}
                     <div className="flex items-center mb-2">
                       <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors truncate" title={epic.name}>{epic.name}</h3>
-                      <button onClick={(e) => { e.stopPropagation(); toggleFavoriteEpic(epic.epicKey); }} className="ml-2 flex items-center justify-center transition-transform hover:scale-110 active:scale-95 focus:outline-none">
+                      <button onClick={(e) => { e.stopPropagation(); toggleFavoriteEpic(epic.id); }} className="ml-2 flex items-center justify-center transition-transform hover:scale-110 active:scale-95 focus:outline-none">
                         <CheckCircle2 
-                          className={`w-[18px] h-[18px] transition-all duration-300 ${(favoriteEpics || []).includes(epic.epicKey) ? 'text-blue-600 fill-blue-50 drop-shadow-sm' : 'text-gray-300 hover:text-blue-400'}`} 
+                          className={`w-[18px] h-[18px] transition-all duration-300 ${(favoriteEpics || []).includes(epic.id) || (favoriteEpics || []).includes(epic.epicKey) ? 'text-blue-600 fill-blue-50 drop-shadow-sm' : 'text-gray-300 hover:text-blue-400'}`} 
                           strokeWidth={2.5} 
                         />
                       </button>
