@@ -391,6 +391,13 @@ const [pendingEpicKey, setPendingEpicKey] = useState(null);
 
     // 1. 사이드바에서 날아온 "OPEN_EPIC" 및 "RESET_PROJECTS" 신호 수신
     useEffect(() => {
+    // ✨ 마운트 시점에 sessionStorage에 대기 중인 에픽이 있는지 확인
+    const storedEpic = sessionStorage.getItem('qa_base_pending_epic');
+    if (storedEpic) {
+      setPendingEpicKey(storedEpic);
+      sessionStorage.removeItem('qa_base_pending_epic');
+    }
+
     // 특정 에픽으로 직행하는 신호
     const handleOpenEpic = (e) => {
       setPendingEpicKey(e.detail);
@@ -466,7 +473,8 @@ const [pendingEpicKey, setPendingEpicKey] = useState(null);
   }, []);
 
   useEffect(() => {
-    if (view === 'issues' && activeEpic) {
+    // ✨ 스페이스 데이터가 로딩되기 전(spaces.length === 0)에는 잘못된 타입으로 JIRA 요청을 보내는 것을 방지
+    if (view === 'issues' && activeEpic && spaces.length > 0) {
       setSelectedIssue(null); 
       const fetchJiraIssues = async () => {
         setIssues([]); 
