@@ -424,9 +424,11 @@ const [pendingEpicKey, setPendingEpicKey] = useState(null);
   }, [pendingEpicKey, epics]);
 
   const currentSpaceData = spaces.find(s => s.epicKey === activeSpace);
-  const isType2 = currentSpaceData?.spaceType === 'Type 2';
+  const isRealType2 = currentSpaceData?.spaceType === 'Type 2';
   const isType3 = currentSpaceData?.spaceType === 'Type 3';
-
+  
+  // UI(목록, 필터, 상세화면)에서는 타입 2와 타입 3을 완전히 동일하게 취급합니다.
+  const isType2 = isRealType2 || isType3;
   // [Virtualization] 가상 스크롤 상태 및 참조 설정
   const scrollContainerRef = useRef(null);
   const [scrollTop, setScrollTop] = useState(0);
@@ -464,9 +466,9 @@ const [pendingEpicKey, setPendingEpicKey] = useState(null);
       const fetchJiraIssues = async () => {
         setIssues([]); 
         setLoading(true);
-        try {
+      try {
           let selectedIssueType = '개발결함'; // Type 1 기본값
-          if (isType2) selectedIssueType = '솔루션 버그'; // Type 2 기본값
+          if (isRealType2) selectedIssueType = '솔루션 버그'; // 순수 Type 2 기본값
           if (isType3) {
             const currentEpicDataForFetch = epics.find(e => e.epicKey === activeEpic);
             selectedIssueType = currentEpicDataForFetch?.issueType || '아파트너 버그';
@@ -1076,7 +1078,7 @@ const [pendingEpicKey, setPendingEpicKey] = useState(null);
                           </div>
                           <div className="border-t border-gray-100 pt-6">
                             <span className="text-[10px] font-bold text-gray-400 mb-3 block uppercase tracking-wider">
-                              {isType2 ? '이슈 내용' : 'Description'}
+                              {(isType2 || isType3) ? '이슈 내용' : 'Description'}
                             </span>
                             <div className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed bg-gray-50 p-4 rounded-xl border border-gray-100 min-h-[150px]">
                               <HighlightText text={isType2 ? selectedIssue.issueContent : selectedIssue.description} highlight={searchSummary} />
