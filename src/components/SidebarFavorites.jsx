@@ -70,11 +70,12 @@ export const SidebarFavorites = ({ db, user, onNavigate, sidebarOpen, currentMod
   // 추가: 특정 에픽으로 직행하는 함수
   const openSpecificEpic = (epicKey) => {
     setShowProjectPopup(false);
-    onNavigate('projects'); // 먼저 프로젝트 화면으로 이동
-    // 0.1초 뒤 화면이 마운트된 후 이동하라는 신호(이벤트)를 발송
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('OPEN_EPIC', { detail: epicKey }));
-    }, 100);
+    sessionStorage.setItem('qa_base_pending_epic', epicKey); // ✨ 로딩 화면 전환 중 데이터 유실 방지
+    if (currentModule !== 'projects') {
+      onNavigate('projects'); // 프로젝트 화면이 아니면 로딩 화면을 거쳐 이동
+    } else {
+      window.dispatchEvent(new CustomEvent('OPEN_EPIC', { detail: epicKey })); // 이미 프로젝트 화면이면 즉시 이동
+    }
   };
 
   return (
