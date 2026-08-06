@@ -481,7 +481,9 @@ const [pendingEpicKey, setPendingEpicKey] = useState(null);
   }, []);
 
   useEffect(() => {
-    // ✨ DB(spaces, epics)가 완전히 로딩된 후에만 JIRA Fetch를 실행하여 빈 껍데기 요청을 차단합니다.
+    let isCancelled = false; // ✨ 뒤늦은 요청 덮어쓰기 방지 플래그
+
+    // ✨ 조건문과 완벽하게 일치하도록 의존성 배열을 수정했습니다.
     if (view === 'issues' && activeEpic && spaces.length > 0 && epics.length > 0) {
       setSelectedIssue(null); 
       const fetchJiraIssues = async () => {
@@ -491,25 +493,30 @@ const [pendingEpicKey, setPendingEpicKey] = useState(null);
           const issueTypeParam = encodeURIComponent(targetIssueType);
           const res = await fetch(`/api/jira?epicKey=${activeEpic}&issueType=${issueTypeParam}`);
           const data = await res.json();
-          if (res.ok) {
-            setIssues(data.issues || data); 
-            setJiraDomain(data.domain || ''); 
-            setScrollTop(0);
-            if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
-          } else { 
-            console.error("JIRA API 에러:", data.error); 
-            setIssues([]); 
+          if (!isCancelled) {
+            if (res.ok) {
+              setIssues(data.issues || data); 
+              setJiraDomain(data.domain || ''); 
+              setScrollTop(0);
+              if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
+            } else { 
+              console.error("JIRA API 에러:", data.error); 
+              setIssues([]); 
+            }
           }
         } catch (error) {
-          console.error("JIRA 서버 통신 에러:", error);
-          setIssues([]);
+          if (!isCancelled) {
+            console.error("JIRA 서버 통신 에러:", error);
+            setIssues([]);
+          }
         } finally {
-          setLoading(false);
+          if (!isCancelled) setLoading(false);
         }
       };
       fetchJiraIssues();
     }
-  }, [view, activeEpic, targetIssueType, refreshTrigger]); // ✨ 이제 targetIssueType이 올바르게 잡혔을 때만 정확히 반응합니다.
+    return () => { isCancelled = true; };
+  }, [view, activeEpic, targetIssueType, refreshTrigger, spaces.length, epics.length]); // ✨ 치명적 버그 원인: 누락되었던 spaces.length와 epics.length 추가 완수!
 
   useEffect(() => {
     if (view === 'issues' && activeEpic && !loading && issues.length > 0) {
@@ -1145,7 +1152,8 @@ const hasFilters = filterStatus !== 'All' || filterPriority !== 'All' || filterR
         onSubmit={handleEpicSubmit} 
         isEdit={epicModal.isEdit}
         onDelete={handleEpicDelete}
-        spaceType={currentSpaceData?.spaceType}
+        // ✨ DB에 스페이스 키가 중복되어 잘못된 스페이스를 찾더라도, 에픽에 이슈타입이 저장되어 있다면 무조건 Type 3으로 띄웁니다!
+        spaceType={currentSpaceData?.spaceType || (epicFormData.issueType ? 'Type 3' : 'Type 1')}
       />
     </div>
   );
