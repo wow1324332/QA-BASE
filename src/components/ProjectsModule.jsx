@@ -119,14 +119,16 @@ const SpaceModal = ({ isOpen, onClose, formData, setFormData, onSubmit, isEdit, 
           <div>
             <label className="text-xs font-medium text-gray-500 mb-1 block">스페이스 타입</label>
             <CustomSelect 
-              value={formData.spaceType || 'Type 1'} 
-              onChange={val=>setFormData({...formData, spaceType: val})} 
-              options={[
-                {value:'Type 1', label:'타입1 (에픽 + 개발결함)'}, 
-                {value:'Type 2', label:'타입2 (에픽 + 버그)'}
-              ]}
-              className="w-full bg-gray-50 border border-gray-200 text-sm rounded-lg shadow-sm transition-colors focus-within:border-gray-400"
-            />
+               <CustomSelect 
+                value={formData.spaceType || 'Type 1'} 
+                onChange={val=>setFormData({...formData, spaceType: val})} 
+                options={[
+                  {value:'Type 1', label:'타입1 (에픽 + 개발결함)'}, 
+                  {value:'Type 2', label:'타입2 (에픽 + 버그)'},
+                  {value:'Type 3', label:'타입3 (다중 이슈 타입 선택)'}
+                ]}
+                className="w-full bg-gray-50 border border-gray-200 text-sm rounded-lg shadow-sm transition-colors focus-within:border-gray-400"
+              />
           </div>
           <div>
             <label className="text-xs font-medium text-gray-500 mb-1 block">스페이스 명</label>
@@ -151,7 +153,7 @@ const SpaceModal = ({ isOpen, onClose, formData, setFormData, onSubmit, isEdit, 
   );
 };
 
-const EpicModal = ({ isOpen, onClose, formData, setFormData, onSubmit, isEdit, onDelete }) => {
+const EpicModal = ({ isOpen, onClose, formData, setFormData, onSubmit, isEdit, onDelete, spaceType }) => {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-gray-900/30 backdrop-blur-sm z-50 flex items-center justify-center animate-fast-fade">
@@ -167,18 +169,51 @@ const EpicModal = ({ isOpen, onClose, formData, setFormData, onSubmit, isEdit, o
             <label className="text-xs font-medium text-gray-500 mb-1 block">에픽 키 (JIRA)</label>
             <input required value={formData.epicKey} onChange={e=>setFormData({...formData, epicKey: e.target.value})} className="w-full bg-gray-50 border border-gray-200 text-sm rounded-lg px-3 py-2 outline-none focus:border-gray-400 shadow-sm transition-colors" placeholder="예: EPIC-1205" />
           </div>
-          <div>
-            <label className="text-xs font-medium text-gray-500 mb-1 block">상태</label>
-            <CustomSelect 
-              value={formData.status} 
-              onChange={val=>setFormData({...formData, status: val})} 
-              options={[
-                {value:'예정', label:'예정'}, {value:'진행중', label:'진행중'}, 
-                {value:'HOLD', label:'HOLD'}, {value:'완료', label:'완료'}
-              ]}
-              className="w-full bg-gray-50 border border-gray-200 text-sm rounded-lg shadow-sm transition-colors focus-within:border-gray-400"
-            />
-          </div>
+          {spaceType === 'Type 3' ? (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">이슈 타입</label>
+                <CustomSelect 
+                  value={formData.issueType || '아파트너 버그'} 
+                  onChange={val=>setFormData({...formData, issueType: val})} 
+                  options={[
+                    {value:'아파트너 버그', label:'아파트너 버그'},
+                    {value:'솔루션 버그', label:'솔루션 버그'},
+                    {value:'오피스너 버그', label:'오피스너 버그'},
+                    {value:'아파트렌드 버그', label:'아파트렌드 버그'},
+                    {value:'아파트스토리 버그', label:'아파트스토리 버그'},
+                    {value:'피터팬 버그', label:'피터팬 버그'}
+                  ]}
+                  className="w-full bg-gray-50 border border-gray-200 text-sm rounded-lg shadow-sm transition-colors focus-within:border-gray-400"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">상태</label>
+                <CustomSelect 
+                  value={formData.status} 
+                  onChange={val=>setFormData({...formData, status: val})} 
+                  options={[
+                    {value:'예정', label:'예정'}, {value:'진행중', label:'진행중'}, 
+                    {value:'HOLD', label:'HOLD'}, {value:'완료', label:'완료'}
+                  ]}
+                  className="w-full bg-gray-50 border border-gray-200 text-sm rounded-lg shadow-sm transition-colors focus-within:border-gray-400"
+                />
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-1 block">상태</label>
+              <CustomSelect 
+                value={formData.status} 
+                onChange={val=>setFormData({...formData, status: val})} 
+                options={[
+                  {value:'예정', label:'예정'}, {value:'진행중', label:'진행중'}, 
+                  {value:'HOLD', label:'HOLD'}, {value:'완료', label:'완료'}
+                ]}
+                className="w-full bg-gray-50 border border-gray-200 text-sm rounded-lg shadow-sm transition-colors focus-within:border-gray-400"
+              />
+            </div>
+          )}
         </form>
         <div className="flex space-x-2 pt-4 border-t border-gray-100 mt-4">
           <button type="button" onClick={onClose} className="flex-1 bg-gray-100 text-gray-600 text-sm font-medium py-2.5 rounded-xl hover:bg-gray-200 transition-colors border border-gray-200 shadow-sm">취소</button>
@@ -391,6 +426,7 @@ const [pendingEpicKey, setPendingEpicKey] = useState(null);
 
   const currentSpaceData = spaces.find(s => s.epicKey === activeSpace);
   const isType2 = currentSpaceData?.spaceType === 'Type 2';
+  const isType3 = currentSpaceData?.spaceType === 'Type 3';
 
   // [Virtualization] 가상 스크롤 상태 및 참조 설정
   const scrollContainerRef = useRef(null);
@@ -430,7 +466,14 @@ const [pendingEpicKey, setPendingEpicKey] = useState(null);
         setIssues([]); 
         setLoading(true);
         try {
-          const issueTypeParam = isType2 ? encodeURIComponent('솔루션 버그') : encodeURIComponent('개발결함');
+          let selectedIssueType = '개발결함'; // Type 1 기본값
+          if (isType2) selectedIssueType = '솔루션 버그'; // Type 2 기본값
+          if (isType3) {
+            const currentEpicDataForFetch = epics.find(e => e.epicKey === activeEpic);
+            selectedIssueType = currentEpicDataForFetch?.issueType || '아파트너 버그';
+          }
+          
+          const issueTypeParam = encodeURIComponent(selectedIssueType);
           const res = await fetch(`/api/jira?epicKey=${activeEpic}&issueType=${issueTypeParam}`);
           const data = await res.json();
           if (res.ok) {
@@ -721,8 +764,8 @@ const [pendingEpicKey, setPendingEpicKey] = useState(null);
                     <div className="flex justify-between items-start mb-2 pr-8">
                       <div className="flex items-center space-x-1">
                         <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full border border-gray-200 font-bold">{space.epicKey}</span>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full border font-bold ${space.spaceType === 'Type 2' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-teal-50 text-teal-600 border-teal-200'}`}>
-                          {space.spaceType === 'Type 2' ? '타입2' : '타입1'}
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border font-bold ${space.spaceType === 'Type 3' ? 'bg-amber-50 text-amber-600 border-amber-200' : space.spaceType === 'Type 2' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-teal-50 text-teal-600 border-teal-200'}`}>
+                          {space.spaceType === 'Type 3' ? '타입3' : space.spaceType === 'Type 2' ? '타입2' : '타입1'}
                         </span>
                       </div>
                       <span className="text-xs font-bold text-gray-400">{space.department}</span>
@@ -1069,6 +1112,7 @@ const [pendingEpicKey, setPendingEpicKey] = useState(null);
         onSubmit={handleEpicSubmit} 
         isEdit={epicModal.isEdit}
         onDelete={handleEpicDelete}
+        spaceType={currentSpaceData?.spaceType}
       />
     </div>
   );
