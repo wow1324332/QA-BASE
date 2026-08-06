@@ -67,15 +67,14 @@ export const SidebarFavorites = ({ db, user, onNavigate, sidebarOpen, currentMod
   const handleTouchStart = () => { longPressTimer.current = setTimeout(() => { setFavEditMode(true); setShowAddFav(false); setShowProjectPopup(false); }, 1500); };
   const handleTouchEnd = () => { if (longPressTimer.current) clearTimeout(longPressTimer.current); };
 
-  // 추가: 특정 에픽으로 직행하는 함수
-  const openSpecificEpic = (epicKey) => {
+// 추가: 특정 에픽으로 직행하는 함수
+  const openSpecificEpic = (epicId) => {
     setShowProjectPopup(false);
-    sessionStorage.setItem('qa_base_pending_epic', epicKey); // ✨ 로딩 화면 전환 중 데이터 유실 방지
-    if (currentModule !== 'projects') {
-      onNavigate('projects'); // 프로젝트 화면이 아니면 로딩 화면을 거쳐 이동
-    } else {
-      window.dispatchEvent(new CustomEvent('OPEN_EPIC', { detail: epicKey })); // 이미 프로젝트 화면이면 즉시 이동
-    }
+    sessionStorage.setItem('qa_base_pending_epic', epicId); // ✨ 타 모듈에서 넘어갈 때 데이터 증발 완벽 방지
+    onNavigate('projects'); 
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('OPEN_EPIC', { detail: epicId }));
+    }, 100);
   };
 
   return (
@@ -126,15 +125,17 @@ export const SidebarFavorites = ({ db, user, onNavigate, sidebarOpen, currentMod
                   <div className="text-[10px] font-bold text-blue-500 px-3 py-2 uppercase tracking-wider flex items-center mb-1">
                     <Kanban className="w-3 h-3 mr-1.5" /> Favorite Epics
                   </div>
-                  {favoriteEpics.length > 0 ? (
+                    {favoriteEpics.length > 0 ? (
                     <div className="space-y-1 max-h-48 overflow-y-auto no-scrollbar pb-1">
-                      {favoriteEpics.map(epicKey => {
-                        const epicData = allEpics.find(e => e.epicKey === epicKey);
+                      {favoriteEpics.map(epicIdOrKey => {
+                        // ✨ 과거에 저장된 epicKey와 새로 저장될 id 모두 호환되도록 완벽 방어
+                        const epicData = allEpics.find(e => e.id === epicIdOrKey || e.epicKey === epicIdOrKey);
+                        if (!epicData) return null;
                         return (
-                          <button key={epicKey} onClick={() => openSpecificEpic(epicKey)} className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-blue-50/80 text-left transition-colors group">
+                          <button key={epicIdOrKey} onClick={() => openSpecificEpic(epicData.id)} className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-blue-50/80 text-left transition-colors group">
                             <div className="flex flex-col min-w-0 pr-2">
-                              <span className="text-[10px] text-gray-400 font-bold mb-0.5">{epicKey}</span>
-                              <span className="text-sm font-semibold text-gray-700 truncate group-hover:text-blue-700">{epicData?.name || '알 수 없는 프로젝트'}</span>
+                              <span className="text-[10px] text-gray-400 font-bold mb-0.5">{epicData.epicKey}</span>
+                              <span className="text-sm font-semibold text-gray-700 truncate group-hover:text-blue-700">{epicData.name}</span>
                             </div>
                             <ChevronRight className="w-3 h-3 text-gray-300 group-hover:text-blue-500 shrink-0" />
                           </button>
