@@ -250,7 +250,7 @@ const IssueRow = React.memo(({ issue, isType2, isType3, searchSummary, onSelect,
       onClick={() => onSelect(issue)}
       style={{ height: '56px' }} // 가상 스크롤을 위한 고정 높이 지정
     >
-      {isType2 ? (
+     {isType2 ? (
         <>
           <td className="px-5 py-4">
             <span 
@@ -273,6 +273,11 @@ const IssueRow = React.memo(({ issue, isType2, isType3, searchSummary, onSelect,
             <div className="flex items-center">{getPriorityIcon(issue.priority)} {issue.priority}</div>
           </td>
           <td className="px-5 py-4"><JiraBadge className={getStatusBadgeClass(issue.status)}>{issue.status}</JiraBadge></td>
+          {isType3 && (
+            <td className="px-5 py-4">
+              <span className={`text-[10px] px-1.5 py-0.5 rounded border font-bold ${issue.platform === 'iOS' ? 'bg-gray-100 text-gray-700 border-gray-200' : issue.platform === 'Android' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-orange-50 text-orange-600 border-orange-200'}`}>{issue.component}</span>
+            </td>
+          )}
           <td className="px-5 py-4">
             <div className="flex flex-col space-y-1">
               <span className="text-xs font-medium text-gray-700 flex items-center"><User className="w-3 h-3 mr-1 text-gray-400"/> {issue.reporter}</span>
@@ -1003,7 +1008,7 @@ const hasFilters = filterStatus !== 'All' || filterPriority !== 'All' || filterR
                           ) : (
                             <>
                               {/* [Virtualization] 상단 보이지 않는 영역 스페이서 */}
-                              {paddingTop > 0 && <tr style={{ height: paddingTop }} className="border-0"><td colSpan={isType2 ? 6 : 8} className="p-0 border-0"></td></tr>}
+                              {paddingTop > 0 && <tr style={{ height: paddingTop }} className="border-0"><td colSpan={isType2 ? (isType3 ? 7 : 6) : 8} className="p-0 border-0"></td></tr>}
                               
                               {/* [Virtualization] 눈에 보이는 아이템만 렌더링 */}
                               {visibleIssues.map(issue => (
@@ -1021,7 +1026,7 @@ const hasFilters = filterStatus !== 'All' || filterPriority !== 'All' || filterR
                               ))}
 
                               {/* [Virtualization] 하단 보이지 않는 영역 스페이서 */}
-                              {paddingBottom > 0 && <tr style={{ height: paddingBottom }} className="border-0"><td colSpan={isType2 ? 6 : 8} className="p-0 border-0"></td></tr>}
+                              {paddingBottom > 0 && <tr style={{ height: paddingBottom }} className="border-0"><td colSpan={isType2 ? (isType3 ? 7 : 6) : 8} className="p-0 border-0"></td></tr>}
                             </>
                           )}
                         </tbody>
@@ -1066,6 +1071,14 @@ const hasFilters = filterStatus !== 'All' || filterPriority !== 'All' || filterR
                               <span className="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">Reporter</span>
                               <div className="text-sm font-medium text-gray-700 flex items-center mt-1"><User className="w-3 h-3 mr-1 text-gray-400"/>{selectedIssue.reporter}</div>
                             </div>
+                            {isType3 && (
+                              <div>
+                                <span className="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">Platform Type</span>
+                                <div className="text-sm font-medium text-gray-700 mt-1">
+                                  <span className={`text-[10px] px-1.5 py-0.5 rounded border font-bold ${selectedIssue.platform === 'iOS' ? 'bg-gray-100 text-gray-700 border-gray-200' : selectedIssue.platform === 'Android' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-orange-50 text-orange-600 border-orange-200'}`}>{selectedIssue.component}</span>
+                                </div>
+                              </div>
+                            )}
                             {!isType2 && (
                               <>
                                 <div>
