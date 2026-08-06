@@ -67,7 +67,7 @@ export default async function handler(req, res) {
         jql: jql,
         maxResults: 100, 
         // [수정] 커스텀 필드 번호 10655로 정확히 변경
-        fields: ["summary", "components", "priority", "issuetype", "status", "reporter", "assignee", "created", "customfield_10694", "description", "customfield_10655"]
+        fields: ["summary", "components", "priority", "issuetype", "status", "reporter", "assignee", "created", "customfield_10694", "description", "customfield_10655", "customfield_10822"]
       };
       
       if (nextPageToken) payload.nextPageToken = nextPageToken; 
@@ -136,6 +136,12 @@ export default async function handler(req, res) {
       // [수정] 업그레이드된 만능 추출 함수를 적용하여 이슈 내용을 완벽하게 파싱
       let desc = extractTextFromADF(issue.fields?.description)?.trim() || '설명 내용이 없습니다.';
       let contentStr = extractTextFromADF(issue.fields?.customfield_10655)?.trim() || '이슈 내용이 없습니다.';
+      
+      // [추가] 커스텀 필드 10822 (플랫폼 유형) 추출. 없으면 기존 component 사용
+      let platformVal = issue.fields?.components?.[0]?.name || '전체';
+      if (issue.fields?.customfield_10822) {
+        platformVal = extractTextFromADF(issue.fields.customfield_10822)?.trim() || platformVal;
+      }
 
       return {
         id: issue.id,
@@ -143,8 +149,8 @@ export default async function handler(req, res) {
         summary: issue.fields?.summary || '제목 없음',
         description: desc,
         issueContent: contentStr,
-        component: issue.fields?.components?.[0]?.name || '전체',
-        platform: issue.fields?.components?.[0]?.name || '전체',
+        component: platformVal,
+        platform: platformVal,
         priority: issue.fields?.priority?.name || 'Medium',
         type: issue.fields?.issuetype?.name || targetIssueType,
         phenomenon: phenom,
