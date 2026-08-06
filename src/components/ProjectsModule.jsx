@@ -441,6 +441,13 @@ const [pendingEpicKey, setPendingEpicKey] = useState(null);
   
   // UI(목록, 필터, 상세화면)에서는 타입 2와 타입 3을 완전히 동일하게 취급합니다.
   const isType2 = isRealType2 || isType3;
+
+  // ✨ JIRA에 요청할 이슈 타입을 안전하게 미리 계산 (의존성 무한루프 방지)
+  const targetIssueType = useMemo(() => {
+    const epic = epics.find(e => e.epicKey === activeEpic);
+    return epic?.issueType || (isType3 ? '아파트너 버그' : (isRealType2 ? '솔루션 버그' : '개발결함'));
+  }, [epics, activeEpic, isType3, isRealType2]);
+
   // [Virtualization] 가상 스크롤 상태 및 참조 설정
   const scrollContainerRef = useRef(null);
   const [scrollTop, setScrollTop] = useState(0);
@@ -473,27 +480,19 @@ const [pendingEpicKey, setPendingEpicKey] = useState(null);
   }, []);
 
   useEffect(() => {
-    // ✨ 스페이스 데이터가 로딩되기 전(spaces.length === 0)에는 잘못된 타입으로 JIRA 요청을 보내는 것을 방지
-    if (view === 'issues' && activeEpic && spaces.length > 0) {
+    // ✨ DB(spaces, epics)가 완전히 로딩된 후에만 JIRA Fetch를 실행하여 빈 껍데기 요청을 차단합니다.
+    if (view === 'issues' && activeEpic && spaces.length > 0 && epics.length > 0) {
       setSelectedIssue(null); 
       const fetchJiraIssues = async () => {
         setIssues([]); 
         setLoading(true);
-      try {
-          let selectedIssueType = '개발결함'; // Type 1 기본값
-          if (isRealType2) selectedIssueType = '솔루션 버그'; // 순수 Type 2 기본값
-          if (isType3) {
-            const currentEpicDataForFetch = epics.find(e => e.epicKey === activeEpic);
-            selectedIssueType = currentEpicDataForFetch?.issueType || '아파트너 버그';
-          }
-          
-          const issueTypeParam = encodeURIComponent(selectedIssueType);
+        try {
+          const issueTypeParam = encodeURIComponent(targetIssueType);
           const res = await fetch(`/api/jira?epicKey=${activeEpic}&issueType=${issueTypeParam}`);
           const data = await res.json();
           if (res.ok) {
             setIssues(data.issues || data); 
             setJiraDomain(data.domain || ''); 
-            // 데이터 호출 완료 시 스크롤 최상단 리셋
             setScrollTop(0);
             if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
           } else { 
@@ -509,7 +508,7 @@ const [pendingEpicKey, setPendingEpicKey] = useState(null);
       };
       fetchJiraIssues();
     }
-  }, [view, activeEpic, isType2, refreshTrigger]);
+  }, [view, activeEpic, targetIssueType, refreshTrigger]); // ✨ 이제 targetIssueType이 올바르게 잡혔을 때만 정확히 반응합니다.
 
   useEffect(() => {
     if (view === 'issues' && activeEpic && !loading && issues.length > 0) {
