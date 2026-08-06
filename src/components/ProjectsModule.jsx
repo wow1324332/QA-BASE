@@ -243,7 +243,7 @@ const getStatusBadgeClass = (status) => {
 };
 
 // [Virtualization] 각 행을 렌더링하는 컴포넌트를 React.memo로 감싸서 불필요한 재렌더링 차단
-const IssueRow = React.memo(({ issue, isType2, searchSummary, onSelect, onOpenJira, onTooltipEnter, onTooltipLeave }) => {
+const IssueRow = React.memo(({ issue, isType2, isType3, searchSummary, onSelect, onOpenJira, onTooltipEnter, onTooltipLeave }) => {
   return (
     <tr 
       className="hover:bg-blue-50/30 transition-colors group cursor-pointer" 
@@ -603,9 +603,11 @@ const [pendingEpicKey, setPendingEpicKey] = useState(null);
       if (filterPriority !== 'All' && issue.priority !== filterPriority) return false;
       if (filterReporter !== 'All' && issue.reporter !== filterReporter) return false; 
       
-      if (!isType2) {
+      if (!isType2 || isType3) {
         if (filterPlatform !== 'All' && issue.component !== filterPlatform) return false;
-        if (filterPhenomenon !== 'All' && issue.phenomenon !== filterPhenomenon) return false; // ✅ 신규: 현상분류 거르기
+      }
+      if (!isType2) {
+        if (filterPhenomenon !== 'All' && issue.phenomenon !== filterPhenomenon) return false;
       }
       
       if (searchSummary) {
@@ -680,7 +682,7 @@ const [pendingEpicKey, setPendingEpicKey] = useState(null);
     );
   };
 
-  const hasFilters = filterStatus !== 'All' || filterPriority !== 'All' || filterReporter !== 'All' || searchInput || (!isType2 && (filterPlatform !== 'All' || filterPhenomenon !== 'All'));
+const hasFilters = filterStatus !== 'All' || filterPriority !== 'All' || filterReporter !== 'All' || searchInput || (!isType2 && (filterPlatform !== 'All' || filterPhenomenon !== 'All')) || (isType3 && filterPlatform !== 'All');
 
   return (
     <div className="w-screen h-screen bg-[#f8f9fa] flex flex-col overflow-hidden animate-simple-fade">
@@ -925,11 +927,16 @@ const [pendingEpicKey, setPendingEpicKey] = useState(null);
                     <div className="w-px h-4 bg-gray-200 mx-1"></div>
                     <CustomSelect value={filterStatus} onChange={setFilterStatus} options={statusOptions} className="bg-transparent text-xs font-medium text-gray-700 outline-none w-32 hover:bg-gray-50 rounded-md transition-colors" />
                     <div className="w-px h-4 bg-gray-200 mx-1"></div>
+                    {isType3 && (
+                      <>
+                        <CustomSelect value={filterPlatform} onChange={setFilterPlatform} options={platformOptions} className="bg-transparent text-xs font-medium text-gray-700 outline-none w-32 hover:bg-gray-50 rounded-md transition-colors" />
+                        <div className="w-px h-4 bg-gray-200 mx-1"></div>
+                      </>
+                    )}
                     {!isType2 && (
                       <>
                         <CustomSelect value={filterPlatform} onChange={setFilterPlatform} options={platformOptions} className="bg-transparent text-xs font-medium text-gray-700 outline-none w-32 hover:bg-gray-50 rounded-md transition-colors" />
                         <div className="w-px h-4 bg-gray-200 mx-1"></div>
-                        {/* ✅ 신규: 현상분류 필터 UI */}
                         <CustomSelect value={filterPhenomenon} onChange={setFilterPhenomenon} options={phenomenonOptions} className="bg-transparent text-xs font-medium text-gray-700 outline-none w-32 hover:bg-gray-50 rounded-md transition-colors" />
                         <div className="w-px h-4 bg-gray-200 mx-1"></div>
                       </>
@@ -969,6 +976,7 @@ const [pendingEpicKey, setPendingEpicKey] = useState(null);
                                 <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider w-1/3">요약 (Summary)</th>
                                 <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">우선순위</th>
                                 <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">상태</th>
+                                {isType3 && <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">플랫폼 유형</th>}
                                 <th className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">보고자</th>
                               </>
                             ) : (
@@ -1003,6 +1011,7 @@ const [pendingEpicKey, setPendingEpicKey] = useState(null);
                                   key={issue.id}
                                   issue={issue}
                                   isType2={isType2}
+                                  isType3={isType3}
                                   searchSummary={searchSummary}
                                   onSelect={setSelectedIssue}
                                   onOpenJira={handleOpenJiraIssue}
