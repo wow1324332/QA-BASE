@@ -119,16 +119,15 @@ const SpaceModal = ({ isOpen, onClose, formData, setFormData, onSubmit, isEdit, 
           <div>
             <label className="text-xs font-medium text-gray-500 mb-1 block">스페이스 타입</label>
             <CustomSelect 
-               <CustomSelect 
-                value={formData.spaceType || 'Type 1'} 
-                onChange={val=>setFormData({...formData, spaceType: val})} 
-                options={[
-                  {value:'Type 1', label:'타입1 (에픽 + 개발결함)'}, 
-                  {value:'Type 2', label:'타입2 (에픽 + 버그)'},
-                  {value:'Type 3', label:'타입3 (다중 이슈 타입 선택)'}
-                ]}
-                className="w-full bg-gray-50 border border-gray-200 text-sm rounded-lg shadow-sm transition-colors focus-within:border-gray-400"
-              />
+              value={formData.spaceType || 'Type 1'} 
+              onChange={val=>setFormData({...formData, spaceType: val})} 
+              options={[
+                {value:'Type 1', label:'타입1 (에픽 + 개발결함)'}, 
+                {value:'Type 2', label:'타입2 (에픽 + 버그)'},
+                {value:'Type 3', label:'타입3 (다중 이슈 타입 선택)'}
+              ]}
+              className="w-full bg-gray-50 border border-gray-200 text-sm rounded-lg shadow-sm transition-colors focus-within:border-gray-400"
+            />
           </div>
           <div>
             <label className="text-xs font-medium text-gray-500 mb-1 block">스페이스 명</label>
