@@ -804,7 +804,7 @@ const hasFilters = filterStatus !== 'All' || filterPriority !== 'All' || filterR
                   </div>
                   <p className="text-sm text-gray-500 font-medium">추적할 프로젝트(에픽)를 선택하거나 새로 등록하세요.</p>
                 </div>
-                <button onClick={() => { setEpicFormData({ id: '', spaceKey: activeSpace, name: '', epicKey: '', status: '예정', progress: 0 }); setEpicModal({isOpen: true, isEdit: false}); }} className="bg-gray-800 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-gray-900 transition-colors shadow-md flex items-center">
+                <button onClick={() => { setEpicFormData({ id: '', spaceKey: activeSpace, name: '', epicKey: '', status: '예정', progress: 0, issueType: isType3 ? '아파트너 버그' : '개발결함' }); setEpicModal({isOpen: true, isEdit: false}); }} className="bg-gray-800 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-gray-900 transition-colors shadow-md flex items-center">
                   <Plus className="w-4 h-4 mr-1.5" /> 프로젝트 추가
                 </button>
               </div>
