@@ -822,31 +822,45 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
-  // ✅ [이미지 업로드 2] 파이어베이스 스토리지로 사진을 올리고 화면에 띄우는 마법 함수
+  // ✅ [이미지 업로드 2] 미리보기로 체감속도를 0초로 만드는 스마트 업로드 함수
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     setIsUploading(true);
+    
+    // 1. 임시 고유 ID 및 로컬(내 컴퓨터) 미리보기 주소 만들기
+    const tempId = `img_${Date.now()}`;
+    const localUrl = URL.createObjectURL(file);
+
+    // 2. 에디터에 즉시 반투명한 미리보기 이미지 삽입 (체감 속도 0초!)
+    contentRef.current?.focus();
+    const imgTag = `<img id="${tempId}" src="${localUrl}" style="opacity: 0.5; max-width: 100%; transition: opacity 0.3s ease-in-out; border-radius: 8px; margin: 10px 0;" alt="업로드 중..." />`;
+    document.execCommand('insertHTML', false, imgTag);
+
     try {
-      // 1. 사진이 저장될 폴더와 고유한 이름 만들기 (예: board_images/1690000000_사진.jpg)
+      // 3. 백그라운드에서 실제 파이어베이스 스토리지로 업로드 진행
       const fileName = `board_images/${Date.now()}_${file.name}`;
       const imageRef = ref(storage, fileName);
-
-      // 2. 스토리지 창고에 파일 업로드하기
       await uploadBytes(imageRef, file);
 
-      // 3. 방금 올린 사진을 볼 수 있는 인터넷 주소(URL) 가져오기
+      // 4. 업로드가 완료되면 에디터 안의 임시 이미지를 진짜 파이어베이스 URL로 바꿔치기
       const imageUrl = await getDownloadURL(imageRef);
-
-      // 4. 에디터 본문에 사진 주소를 그림(img) 형태로 삽입하기
-      contentRef.current?.focus();
-      document.execCommand('insertImage', false, imageUrl);
+      const uploadedImg = contentRef.current.querySelector(`#${tempId}`);
+      if (uploadedImg) {
+        uploadedImg.src = imageUrl;
+        uploadedImg.style.opacity = '1'; // 선명하게 변경
+        uploadedImg.removeAttribute('id'); // 임시 ID 정리
+      }
     } catch (error) {
       console.error("이미지 업로드 실패:", error);
       alert("이미지 업로드에 실패했습니다. 다시 시도해 주세요.");
+      // 실패 시 에디터에 띄워둔 반투명 임시 이미지 삭제
+      const failedImg = contentRef.current.querySelector(`#${tempId}`);
+      if (failedImg) failedImg.remove();
     } finally {
       setIsUploading(false);
+      URL.revokeObjectURL(localUrl); // 메모리 누수 방지용 청소
       // 5. 같은 사진을 또 올릴 수 있도록 선택된 파일 지우기
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
