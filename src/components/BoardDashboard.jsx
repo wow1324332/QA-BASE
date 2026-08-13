@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Folder, FileText, Plus, Search, ChevronRight, LayoutDashboard, 
-  LogOut, Power, Bold, Italic, Underline, Trash2, Edit3, X, ChevronDown, Save, Users, Menu, ChevronLeft, Type, Palette, Minus, AlertCircle
+  LogOut, Power, Bold, Italic, Underline, Trash2, Edit3, X, ChevronDown, Save, Users, Menu, ChevronLeft, Type, Palette, Minus, AlertCircle, ImagePlus
 } from 'lucide-react';
 import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, query, where, serverTimestamp } from "firebase/firestore";
-import { db } from '../firebaseConfig'; // 🔥 경로 확인
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, storage } from '../firebaseConfig'; // 🔥 경로 확인
 import { SidebarFavorites } from './SidebarFavorites';
 
 export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
@@ -808,7 +809,7 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   );
 };
 
-// --- 서브 컴포넌트: 게시글 읽기 및 플로팅 에디터 ---
+  // --- 서브 컴포넌트: 게시글 읽기 및 플로팅 에디터 ---
   const PostEditorViewer = ({ post, isEditing, setIsEditing, onClose, onDelete, currentUser, db }) => {
   const contentRef = useRef(null);
   const [localTitle, setLocalTitle] = useState(post.title);
@@ -816,6 +817,42 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
 
   // ✅ [추가됨] 폰트, 색상 등 드롭다운 메뉴가 열려있는지 기억하는 상태값
   const [activeMenu, setActiveMenu] = useState(null);
+
+  // ✅ [이미지 업로드 1] 로딩 상태와 파일 선택기(ref) 추가
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  // ✅ [이미지 업로드 2] 파이어베이스 스토리지로 사진을 올리고 화면에 띄우는 마법 함수
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      // 1. 사진이 저장될 폴더와 고유한 이름 만들기 (예: board_images/1690000000_사진.jpg)
+      const fileName = `board_images/${Date.now()}_${file.name}`;
+      const imageRef = ref(storage, fileName);
+
+      // 2. 스토리지 창고에 파일 업로드하기
+      await uploadBytes(imageRef, file);
+
+      // 3. 방금 올린 사진을 볼 수 있는 인터넷 주소(URL) 가져오기
+      const imageUrl = await getDownloadURL(imageRef);
+
+      // 4. 에디터 본문에 사진 주소를 그림(img) 형태로 삽입하기
+      contentRef.current?.focus();
+      document.execCommand('insertImage', false, imageUrl);
+    } catch (error) {
+      console.error("이미지 업로드 실패:", error);
+      alert("이미지 업로드에 실패했습니다. 다시 시도해 주세요.");
+    } finally {
+      setIsUploading(false);
+      // 5. 같은 사진을 또 올릴 수 있도록 선택된 파일 지우기
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   // ✅ [변경됨] 버튼을 누르면 기능이 실행되고, 열려있던 드롭다운 메뉴를 자동으로 닫아줍니다.
   const execCmd = (cmd, arg = null) => {
@@ -935,6 +972,27 @@ return (
             <button type="button" onMouseDown={(e) => { e.preventDefault(); execCmd('formatBlock', '<h2>'); }} className="p-1.5 rounded-xl hover:bg-white/60 text-gray-700 transition-colors font-bold text-xs" title="소제목">H2</button>
             <button type="button" onMouseDown={(e) => { e.preventDefault(); execCmd('insertUnorderedList'); }} className="p-1.5 rounded-xl hover:bg-white/60 text-gray-700 transition-colors font-bold text-xs" title="글머리 기호">•</button>
             <button type="button" onMouseDown={(e) => { e.preventDefault(); execCmd('insertHorizontalRule'); }} className="p-1.5 rounded-xl hover:bg-white/60 text-gray-700 transition-colors" title="구분선 삽입"><Minus className="w-3.5 h-3.5" /></button>
+            
+            <div className="w-px h-5 bg-gray-300/50 mx-1.5"></div>
+
+            {/* ✅ [이미지 업로드 3] 숨겨진 파일 선택 창과 업로드 버튼 추가 */}
+            <input 
+              type="file" 
+              accept="image/*" 
+              ref={fileInputRef} 
+              onChange={handleImageUpload} 
+              className="hidden" 
+            />
+            <button 
+              type="button" 
+              onMouseDown={(e) => { e.preventDefault(); fileInputRef.current?.click(); }} 
+              className={`p-1.5 rounded-xl hover:bg-white/60 transition-colors ${isUploading ? 'text-blue-500 animate-pulse' : 'text-gray-700'}`} 
+              title="이미지 첨부"
+              disabled={isUploading}
+            >
+              <ImagePlus className="w-3.5 h-3.5" />
+            </button>
+
           </div>
         </div>
       )}
