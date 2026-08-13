@@ -822,49 +822,70 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
-  // ✅ [이미지 업로드 2] 미리보기로 체감속도를 0초로 만드는 스마트 업로드 함수
+  // ✅ [이미지 업로드 2] 다중 선택 시 네이버 블로그처럼 갤러리 형태로 나란히 배치하는 함수
   const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    // 선택된 여러 파일들을 배열(Array) 형태로 모두 가져옵니다.
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
 
     setIsUploading(true);
-    
-    // 1. 임시 고유 ID 및 로컬(내 컴퓨터) 미리보기 주소 만들기
-    const tempId = `img_${Date.now()}`;
-    const localUrl = URL.createObjectURL(file);
-
-    // 2. 에디터에 즉시 반투명한 미리보기 이미지 삽입 (체감 속도 0초!)
     contentRef.current?.focus();
-    const imgTag = `<img id="${tempId}" src="${localUrl}" style="opacity: 0.5; max-width: 100%; transition: opacity 0.3s ease-in-out; border-radius: 8px; margin: 10px 0;" alt="업로드 중..." />`;
-    document.execCommand('insertHTML', false, imgTag);
+
+    const isMultiple = files.length > 1;
+
+    // 1. 각 파일마다 고유 임시 ID와 로컬 미리보기 주소 만들기
+    const tempImages = files.map(file => ({
+      file,
+      id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      localUrl: URL.createObjectURL(file)
+    }));
+
+    // 2. 에디터에 삽입할 HTML 조립 (여러 장이면 Flexbox로 나란히, 한 장이면 기존처럼)
+    let imgHtml = '';
+    if (isMultiple) {
+      imgHtml = `<div style="display: flex; flex-direction: row; gap: 8px; margin: 10px 0; width: 100%;">`;
+      tempImages.forEach(img => {
+        imgHtml += `<div style="flex: 1; min-width: 0; display: flex; flex-direction: column;"><img id="${img.id}" src="${img.localUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px; opacity: 0.5; transition: opacity 0.3s ease-in-out;" alt="업로드 중..." /></div>`;
+      });
+      imgHtml += `</div><p><br></p>`; // 갤러리 아래에 자연스럽게 글을 쓸 수 있게 빈 줄 추가
+    } else {
+      imgHtml = `<img id="${tempImages[0].id}" src="${tempImages[0].localUrl}" style="max-width: 100%; border-radius: 8px; margin: 10px 0; opacity: 0.5; transition: opacity 0.3s ease-in-out;" alt="업로드 중..." /><p><br></p>`;
+    }
+
+    // 3. 에디터에 즉시 반투명한 미리보기 이미지 묶음 삽입 (체감 속도 0초)
+    document.execCommand('insertHTML', false, imgHtml);
 
     try {
-      // 3. 백그라운드에서 실제 파이어베이스 스토리지로 업로드 진행
-      const fileName = `board_images/${Date.now()}_${file.name}`;
-      const imageRef = ref(storage, fileName);
-      await uploadBytes(imageRef, file);
+      // 4. 모든 사진을 백그라운드에서 동시에 파이어베이스로 병렬 업로드 (속도 극대화)
+      await Promise.all(tempImages.map(async (img) => {
+        const fileName = `board_images/${Date.now()}_${img.file.name}`;
+        const imageRef = ref(storage, fileName);
+        await uploadBytes(imageRef, img.file);
+        const imageUrl = await getDownloadURL(imageRef);
 
-      // 4. 업로드가 완료되면 에디터 안의 임시 이미지를 진짜 파이어베이스 URL로 바꿔치기
-      const imageUrl = await getDownloadURL(imageRef);
-      const uploadedImg = contentRef.current.querySelector(`#${tempId}`);
-      if (uploadedImg) {
-        uploadedImg.src = imageUrl;
-        uploadedImg.style.opacity = '1'; // 선명하게 변경
-        uploadedImg.removeAttribute('id'); // 임시 ID 정리
-      }
+        // 5. 업로드가 완료된 사진부터 즉시 URL을 교체하고 선명하게 투명도 복구
+        const uploadedImg = contentRef.current.querySelector(`#${img.id}`);
+        if (uploadedImg) {
+          uploadedImg.src = imageUrl;
+          uploadedImg.style.opacity = '1';
+          uploadedImg.removeAttribute('id');
+        }
+      }));
     } catch (error) {
-      console.error("이미지 업로드 실패:", error);
-      alert("이미지 업로드에 실패했습니다. 다시 시도해 주세요.");
-      // 실패 시 에디터에 띄워둔 반투명 임시 이미지 삭제
-      const failedImg = contentRef.current.querySelector(`#${tempId}`);
-      if (failedImg) failedImg.remove();
+      console.error("다중 이미지 업로드 실패:", error);
+      alert("일부 이미지 업로드에 실패했습니다. 다시 시도해 주세요.");
+      // 실패 시 에디터에 띄워둔 반투명 임시 이미지 정리
+      tempImages.forEach(img => {
+        const failedImg = contentRef.current.querySelector(`#${img.id}`);
+        if (failedImg) {
+          if (isMultiple) failedImg.parentElement.remove();
+          else failedImg.remove();
+        }
+      });
     } finally {
       setIsUploading(false);
-      URL.revokeObjectURL(localUrl); // 메모리 누수 방지용 청소
-      // 5. 같은 사진을 또 올릴 수 있도록 선택된 파일 지우기
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      tempImages.forEach(img => URL.revokeObjectURL(img.localUrl)); // 메모리 누수 방지 청소
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -989,10 +1010,11 @@ return (
             
             <div className="w-px h-5 bg-gray-300/50 mx-1.5"></div>
 
-            {/* ✅ [이미지 업로드 3] 숨겨진 파일 선택 창과 업로드 버튼 추가 */}
+            {/* ✅ [이미지 업로드 3] 다중 선택(multiple)이 가능해진 파일 선택 창 */}
             <input 
               type="file" 
               accept="image/*" 
+              multiple 
               ref={fileInputRef} 
               onChange={handleImageUpload} 
               className="hidden" 
