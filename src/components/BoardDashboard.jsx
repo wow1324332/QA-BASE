@@ -813,6 +813,15 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   const PostEditorViewer = ({ post, isEditing, setIsEditing, onClose, onDelete, currentUser, db }) => {
   const contentRef = useRef(null);
   const [localTitle, setLocalTitle] = useState(post.title);
+
+  // ✅ [시네마틱 뷰어 1] 클릭한 이미지의 URL을 담는 상태 및 ESC 키로 닫는 이벤트 추가
+  const [viewingImage, setViewingImage] = useState(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => { if (e.key === 'Escape') setViewingImage(null); };
+    if (viewingImage) window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [viewingImage]);
   const isAuthor = currentUser?.role !== 'viewer' && (currentUser?.id === post.authorId || currentUser?.email === post.authorId);
 
   // ✅ [추가됨] 폰트, 색상 등 드롭다운 메뉴가 열려있는지 기억하는 상태값
@@ -953,7 +962,22 @@ return (
             ) : (
               <h1 className="font-black text-4xl text-gray-900 mb-8 pb-4 border-b border-gray-100">{post.title}</h1>
             )}
-            <div ref={contentRef} contentEditable={isEditing} suppressContentEditableWarning spellCheck={false} data-placeholder={isEditing ? "내용을 작성하세요..." : ""} className={`outline-none text-base leading-loose min-h-[500px] text-gray-800 ${isEditing ? 'cursor-text empty:before:content-[attr(data-placeholder)] empty:before:text-gray-300' : 'cursor-default'}`} dangerouslySetInnerHTML={{ __html: post.content || '' }} />
+            {/* ✅ [시네마틱 뷰어 2] 클릭 이벤트를 추가하여 이미지일 경우에만 뷰어를 엽니다. */}
+            <div 
+              ref={contentRef} 
+              contentEditable={isEditing} 
+              suppressContentEditableWarning 
+              spellCheck={false} 
+              onClick={(e) => {
+                // 편집 모드가 아닐 때(읽기 모드일 때) 이미지를 클릭하면 뷰어를 띄웁니다.
+                if (!isEditing && e.target.tagName === 'IMG') {
+                  setViewingImage(e.target.src);
+                }
+              }}
+              data-placeholder={isEditing ? "내용을 작성하세요..." : ""} 
+              className={`outline-none text-base leading-loose min-h-[500px] text-gray-800 ${isEditing ? 'cursor-text empty:before:content-[attr(data-placeholder)] empty:before:text-gray-300' : 'cursor-default'}`} 
+              dangerouslySetInnerHTML={{ __html: post.content || '' }} 
+            />
           </div>
         </div>
       </div>
@@ -1041,7 +1065,31 @@ return (
               <ImagePlus className="w-3.5 h-3.5" />
             </button>
 
-          </div>
+</div>
+        </div>
+      )}
+
+      {/* ✅ [시네마틱 뷰어 3] 이미지를 클릭했을 때 화면 전체를 덮는 다크 글래스모피즘 뷰어 */}
+      {viewingImage && (
+        <div 
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md animate-fast-fade p-4 md:p-10 cursor-zoom-out"
+          onClick={() => setViewingImage(null)}
+        >
+          {/* 우측 상단 닫기 버튼 */}
+          <button 
+            className="absolute top-6 right-6 md:top-10 md:right-10 p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all duration-300 backdrop-blur-lg hover:rotate-90 shadow-lg"
+            title="닫기 (ESC)"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          
+          {/* 중앙 확대된 이미지 */}
+          <img 
+            src={viewingImage} 
+            alt="Enlarged Viewer" 
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-full max-h-full object-contain rounded-2xl shadow-[0_30px_60px_rgba(0,0,0,0.8)] animate-fast-fade cursor-default"
+          />
         </div>
       )}
 
