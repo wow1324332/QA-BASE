@@ -875,6 +875,20 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [viewingImage]);
 
+  // ✅ [이미지 로딩 최적화] 기존에 작성된 무거운 사진들이 뚝뚝 끊기며 뜨는 것을 방지하고, 로딩 완료 시 부드럽게 나타나도록 처리합니다.
+  useEffect(() => {
+    if (contentRef.current && !isEditing) {
+      const images = contentRef.current.querySelectorAll('img');
+      images.forEach(img => {
+        if (!img.complete) {
+          img.style.opacity = '0';
+          img.style.transition = 'opacity 0.5s ease-in-out';
+          img.onload = () => { img.style.opacity = '1'; };
+        }
+      });
+    }
+  }, [post.content, isEditing]);
+
   // ✅ [이미지 업로드 1] 로딩 상태와 파일 선택기(ref) 추가
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
@@ -889,17 +903,40 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
 
     const isMultiple = files.length > 1;
 
-    // 1. 사진을 화면에 넣기 전, 각 사진의 가로/세로 비율(Ratio)을 미리 계산하는 헬퍼 함수
+// 1. 사진 비율 계산 + 🌟 캔버스(Canvas)를 이용해 원본 사진 용량을 1/10 수준으로 '자동 압축'하는 마법 함수
     const getImageRatioAndUrl = (file) => new Promise((resolve) => {
       const localUrl = URL.createObjectURL(file);
       const img = new Image();
       img.onload = () => {
-        resolve({
-          file,
-          id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          localUrl,
-          ratio: img.naturalWidth / img.naturalHeight // 핵심: 가로가 길수록 이 값이 커집니다.
-        });
+        // ✅ 사진 가로 폭을 최대 1200px로 제한하여 용량을 획기적으로 줄입니다.
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1200;
+        let width = img.naturalWidth;
+        let height = img.naturalHeight;
+
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // ✅ 화질 저하가 거의 없는 JPEG 80% 포맷으로 변환 (수 MB 사진이 수십~수백 KB로 줄어듭니다)
+        canvas.toBlob((blob) => {
+          const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg', lastModified: Date.now() });
+          const compressedUrl = URL.createObjectURL(compressedFile);
+
+          resolve({
+            file: compressedFile, // 원본 대신 용량이 팍 줄어든 파일 교체!
+            id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            localUrl: compressedUrl,
+            ratio: width / height
+          });
+          URL.revokeObjectURL(localUrl); // 메모리 청소
+        }, 'image/jpeg', 0.8);
       };
       img.src = localUrl;
     });
