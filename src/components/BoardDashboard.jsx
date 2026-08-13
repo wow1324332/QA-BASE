@@ -873,7 +873,6 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
     if (viewingImage) window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [viewingImage]);
-  const isAuthor = currentUser?.role !== 'viewer' && (currentUser?.id === post.authorId || currentUser?.email === post.authorId);
 
   // ✅ [이미지 업로드 1] 로딩 상태와 파일 선택기(ref) 추가
   const [isUploading, setIsUploading] = useState(false);
