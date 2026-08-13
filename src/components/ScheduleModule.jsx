@@ -849,12 +849,18 @@ export const ScheduleDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   const allDbAssignees = Array.from(new Set(schedules.flatMap(s => s.assignees || (s.assignee ? [s.assignee] : []))));
   const allAssigneesList = Array.from(new Set([...allDbAssignees, ...customAssignees])).filter(Boolean);
 
-  // ✅ [공유 기능 3] URL을 분석하여 공유된 일정 ID가 있으면 팝업을 자동으로 띄워줍니다.
+  // ✅ [공유 기능 3] URL을 분석하여 공유된 일정 ID가 있으면 팝업을 띄우거나 전체 보드를 엽니다.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const targetScheduleId = params.get('scheduleId');
 
     if (targetScheduleId) {
+      // 🌟 [추가됨] 전체 보드 공유 링크(?scheduleId=board)인 경우 팝업 없이 화면만 보여주고 끝냅니다!
+      if (targetScheduleId === 'board') {
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
+      }
+
       getDoc(doc(db, 'schedules', targetScheduleId)).then(snap => {
         if (snap.exists()) {
           const data = snap.data();
@@ -1009,7 +1015,7 @@ export const ScheduleDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
           <div className="w-[1.5px] h-5 bg-gray-400/40 rounded-full transition-colors duration-300 group-hover:bg-gray-500/60"></div>
         </button>
 
-        <main className={`flex-1 overflow-hidden flex flex-col p-8 transition-all duration-300 ${!sidebarOpen ? 'ml-12' : ''}`}>
+<main className={`flex-1 overflow-hidden flex flex-col p-8 transition-all duration-300 ${!sidebarOpen ? 'ml-12' : ''}`}>
           <div className="flex justify-between items-end mb-8 shrink-0">
             <div>
               <div className="flex items-center space-x-3 mb-1">
@@ -1020,9 +1026,22 @@ export const ScheduleDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
               </div>
               <p className="text-sm text-gray-500 font-medium">프로젝트 일정 및 진행 상태를 통합 관리합니다.</p>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
+              {/* ✅ [공유 기능 5] 전체 스케쥴 보드 공유 버튼 추가 */}
+              <button 
+                onClick={() => {
+                  const shareUrl = `${window.location.origin}?scheduleId=board`;
+                  navigator.clipboard.writeText(shareUrl).then(() => {
+                    alert("전체 스케쥴 보드 공유 링크가 복사되었습니다!\n(로그인 없이 게스트 모드로 열람 가능)");
+                  });
+                }}
+                className="bg-white text-gray-700 px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-all shadow-sm border border-gray-200 flex items-center"
+              >
+                <Share2 className="w-4 h-4 mr-2 text-blue-500" /> 스케쥴 공유
+              </button>
+
               {user.role !== 'viewer' && (
-                <button onClick={openAddModal} className="bg-gray-800 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-gray-900 transition-colors shadow-md hover-breath flex items-center">
+                <button onClick={openAddModal} className="bg-gray-800 text-white text-sm font-semibold px-4 py-2.5 rounded-lg hover:bg-gray-900 transition-colors shadow-md hover-breath flex items-center">
                   <Plus className="w-4 h-4 mr-1.5" /> 프로젝트 추가
                 </button>
               )}
