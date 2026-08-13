@@ -3,10 +3,10 @@ import { createPortal } from 'react-dom';
 import { 
   Plus, X, CalendarDays, Filter, LayoutDashboard, 
   Calendar, List, Kanban, ChevronLeft, ChevronRight, 
-  User, LogOut, Power, ChevronDown, MonitorSmartphone
+  User, LogOut, Power, ChevronDown, MonitorSmartphone, Share2
 } from 'lucide-react';
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, collection, onSnapshot, doc, writeBatch, updateDoc, addDoc, deleteDoc } from "firebase/firestore";
+import { getFirestore, collection, onSnapshot, doc, writeBatch, updateDoc, addDoc, deleteDoc, getDoc } from "firebase/firestore";
 import { SidebarFavorites } from './SidebarFavorites';
 
 // Firebase 초기화
@@ -245,6 +245,22 @@ const ProjectModal = ({ isOpen, onClose, formData, setFormData, onSubmit, isView
     <div className="fixed inset-0 bg-gray-900/30 backdrop-blur-sm z-50 flex items-center justify-center animate-fast-fade">
       <div className="bg-white rounded-2xl shadow-2xl p-6 w-[450px] border border-gray-100 relative max-h-[90vh] flex flex-col">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X className="w-5 h-5"/></button>
+        
+        {/* ✅ [공유 기능 4] 이미 등록된 일정일 때만 링크 복사 아이콘 띄우기 */}
+        {formData.id && (
+          <button 
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              const shareUrl = `${window.location.origin}?scheduleId=${formData.id}`;
+              navigator.clipboard.writeText(shareUrl).then(() => alert("일정 공유 링크가 복사되었습니다!\n(로그인 없이도 게스트로 열람 가능)"));
+            }} 
+            className="absolute top-4 right-12 text-gray-400 hover:text-green-600 transition-colors" title="링크 복사"
+          >
+            <Share2 className="w-5 h-5"/>
+          </button>
+        )}
+
         <h3 className="text-lg font-medium text-gray-800 mb-4 flex items-center shrink-0">
           <CalendarDays className="w-5 h-5 mr-2 text-gray-600"/> 
           {isEdit ? '프로젝트 상세 정보' : '새 프로젝트 등록'}
@@ -832,6 +848,29 @@ export const ScheduleDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
 
   const allDbAssignees = Array.from(new Set(schedules.flatMap(s => s.assignees || (s.assignee ? [s.assignee] : []))));
   const allAssigneesList = Array.from(new Set([...allDbAssignees, ...customAssignees])).filter(Boolean);
+
+  // ✅ [공유 기능 3] URL을 분석하여 공유된 일정 ID가 있으면 팝업을 자동으로 띄워줍니다.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const targetScheduleId = params.get('scheduleId');
+
+    if (targetScheduleId) {
+      getDoc(doc(db, 'schedules', targetScheduleId)).then(snap => {
+        if (snap.exists()) {
+          const data = snap.data();
+          // 기존 일정이므로 정보를 폼에 채워넣고 뷰어/수정 모드로 엽니다.
+          setFormData({ id: snap.id, ...data });
+          setIsEditMode(true); 
+          setShowModal(true);
+          // 새로고침 무한반복 방지를 위해 URL 파라미터 청소
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } else {
+          alert("삭제되었거나 존재하지 않는 일정입니다.");
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }).catch(err => console.error("공유된 일정 로드 실패:", err));
+    }
+  }, []);
 
   useEffect(() => {
     const schedulesRef = collection(db, 'schedules');
