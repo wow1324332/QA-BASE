@@ -542,40 +542,41 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
                 return (
                   <div key={mCat.id} className="mb-1 select-none">
                     
-                    {/* ✅ 최상위 div의 클릭을 제거하고 배경색(isActive 기준)만 남깁니다. */}
-                    <div className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors group ${isActive && !activePost ? 'bg-white/80 text-gray-900 font-bold shadow-sm' : 'text-gray-600 hover:bg-white/50'}`}>
+                    {/* ✅ 최상위 div에 relative를 추가하여 플로팅 버튼의 기준점을 잡습니다. */}
+                    <div className={`relative w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors group ${isActive && !activePost ? 'bg-white/80 text-gray-900 font-bold shadow-sm' : 'text-gray-600 hover:bg-white/50'}`}>
                       
                       {/* 1. 카테고리명 영역 (클릭 시 화면 이동 & 폴더 열기) */}
                       <div 
                         onClick={() => checkPendingLeave(() => { setActiveMediumId(mCat.id); setActivePost(null); if (!expandedFolders.includes(mCat.id)) setExpandedFolders(prev => [...prev, mCat.id]); })}
-                        className="flex items-center space-x-2 overflow-hidden flex-1 cursor-pointer"
+                        className="flex items-center space-x-2 overflow-hidden flex-1 cursor-pointer pr-1"
                       >
                         <Folder className={`w-4 h-4 shrink-0 ${isActive ? 'text-gray-800' : 'text-gray-400'}`} />
-                        <span className="text-sm truncate w-32">{mCat.name}</span>
+                        {/* ✅ w-32를 제거하여 글자가 전체 빈 공간을 모두 차지할 수 있게 풀어줍니다. */}
+                        <span className="text-sm truncate">{mCat.name}</span>
                       </div>
 
-                      {/* 2. 우측 아이콘 영역 (수정/삭제/글쓰기 & 드롭다운 토글) */}
-                      <div className="flex items-center space-x-1 shrink-0">
+                      {/* 2. 우측 아이콘 영역 (버튼은 공중에 띄우고 화살표만 고정) */}
+                      <div className="flex items-center shrink-0">
                         {user?.role !== 'viewer' && (
-                          <>
-                            <button onClick={(e) => { e.stopPropagation(); setShowModal({ type: 'edit_medium', targetId: mCat.id }); setInputText(mCat.name); }} className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-blue-600 transition-opacity" title="폴더 이름 수정">
+                          /* ✅ 버튼 컨테이너를 absolute로 공중에 띄워 화살표 바로 좌측(right-9)에 나타나게 합니다. */
+                          <div className="absolute right-9 flex items-center space-x-0.5 bg-white/95 backdrop-blur-sm px-1.5 py-0.5 rounded-lg shadow-sm border border-gray-100 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-200 z-10">
+                            <button onClick={(e) => { e.stopPropagation(); setShowModal({ type: 'edit_medium', targetId: mCat.id }); setInputText(mCat.name); }} className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="폴더 이름 수정">
                               <Edit3 className="w-3.5 h-3.5" />
                             </button>
-                            <button onClick={(e) => { e.stopPropagation(); setDeleteMediumTargetId(mCat.id); }} className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-opacity" title="폴더 삭제">
+                            <button onClick={(e) => { e.stopPropagation(); setDeleteMediumTargetId(mCat.id); }} className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors" title="폴더 삭제">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
-                            <button onClick={(e) => { e.stopPropagation(); setShowModal({ type: 'post_add', targetId: mCat.id }); }} className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-green-600 transition-opacity" title="이 폴더에 글쓰기">
+                            <button onClick={(e) => { e.stopPropagation(); setShowModal({ type: 'post_add', targetId: mCat.id }); }} className="p-1 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors" title="이 폴더에 글쓰기">
                               <Plus className="w-3.5 h-3.5" />
                             </button>
-                          </>
+                          </div>
                         )}
                         
-                        {/* 👇 드롭다운 영역: toggleFolder 이벤트 연결! */}
-                        <div onClick={(e) => toggleFolder(e, mCat.id)} className="p-1 cursor-pointer text-gray-400 hover:text-gray-800 hover:bg-gray-200/50 rounded-md transition-all">
+                        {/* 👇 드롭다운 영역: toggleFolder 이벤트 연결! (항상 고정 위치) */}
+                        <div onClick={(e) => toggleFolder(e, mCat.id)} className="p-1 cursor-pointer text-gray-400 hover:text-gray-800 hover:bg-gray-200/50 rounded-md transition-all relative z-0">
                           <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                         </div>
                       </div>
-                      
                     </div>
                     
                     {/* 하위 게시글(스몰 카테고리) 목록 (isExpanded 기준으로 노출) */}
