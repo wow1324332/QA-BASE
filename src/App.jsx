@@ -12,11 +12,19 @@ import { BoardDashboard } from './components/BoardDashboard';
 
 export default function App() {
   const [screen, setScreen] = useState(() => {
+    // ✅ [공유 기능 1] 링크로 접속 시 초기 화면을 보드(knowledge)로 강제 고정
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('boardPost')) return 'knowledge'; 
     return sessionStorage.getItem('qa_base_current_screen') || 'splash';
   });
   
   const [user, setUser] = useState(() => {
     const savedUser = sessionStorage.getItem('qa_base_current_user');
+    // ✅ [공유 기능 2] 링크로 접속했는데 로그인이 안 되어 있다면 '게스트 모드'로 자동 로그인!
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('boardPost') && !savedUser) {
+      return { id: 'guest', name: 'Guest User', email: 'guest@qabase.com', role: 'viewer', profileImage: '' };
+    }
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
