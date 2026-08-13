@@ -100,6 +100,8 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
       await updateDoc(doc(db, 'boardLargeCategories', showModal.targetId), { name: inputText, updatedAt: serverTimestamp() });
     } else if (showModal.type === 'medium') {
       await addDoc(collection(db, 'boardMediumCategories'), { largeId: activeLargeId, name: inputText, createdAt: serverTimestamp(), authorId: user.id || user.email });
+    } else if (showModal.type === 'edit_medium') {
+      await updateDoc(doc(db, 'boardMediumCategories', showModal.targetId), { name: inputText, updatedAt: serverTimestamp() });
     } else if (showModal.type === 'post_add') {
       
       // ✅ [카테고리 동적 처리] 새 카테고리를 직접 입력해 생성하는 경우 처리
@@ -150,6 +152,22 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
     await deleteDoc(doc(db, 'boardLargeCategories', deleteTargetId));
     setDeleteTargetId(null);
     setActiveCardId(null);
+  };
+
+  // ✅ 폴더(중분류) 삭제 상태 및 함수 추가
+  const [deleteMediumTargetId, setDeleteMediumTargetId] = useState(null);
+
+  const executeDeleteMedium = async () => {
+    if (!deleteMediumTargetId) return;
+    // 1. 폴더 삭제 시 해당 폴더의 게시글들을 '미분류(Uncategorized)'로 이동
+    const targetPosts = posts.filter(p => p.mediumId === deleteMediumTargetId);
+    for (const p of targetPosts) {
+      await updateDoc(doc(db, 'boardPosts', p.id), { mediumId: 'Uncategorized' });
+    }
+    // 2. 폴더 삭제
+    await deleteDoc(doc(db, 'boardMediumCategories', deleteMediumTargetId));
+    setDeleteMediumTargetId(null);
+    if (activeMediumId === deleteMediumTargetId) setActiveMediumId('All');
   };
 
   const handlePressStart = (id) => {
@@ -536,12 +554,20 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
                         <span className="text-sm truncate w-32">{mCat.name}</span>
                       </div>
 
-                      {/* 2. 우측 아이콘 영역 (글쓰기 & 드롭다운 토글) */}
+                      {/* 2. 우측 아이콘 영역 (수정/삭제/글쓰기 & 드롭다운 토글) */}
                       <div className="flex items-center space-x-1 shrink-0">
                         {user?.role !== 'viewer' && (
-                          <button onClick={(e) => { e.stopPropagation(); setShowModal({ type: 'post_add', targetId: mCat.id }); }} className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-blue-600 transition-opacity" title="이 폴더에 글쓰기">
-                            <Plus className="w-3.5 h-3.5" />
-                          </button>
+                          <>
+                            <button onClick={(e) => { e.stopPropagation(); setShowModal({ type: 'edit_medium', targetId: mCat.id }); setInputText(mCat.name); }} className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-blue-600 transition-opacity" title="폴더 이름 수정">
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); setDeleteMediumTargetId(mCat.id); }} className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-opacity" title="폴더 삭제">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); setShowModal({ type: 'post_add', targetId: mCat.id }); }} className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-green-600 transition-opacity" title="이 폴더에 글쓰기">
+                              <Plus className="w-3.5 h-3.5" />
+                            </button>
+                          </>
                         )}
                         
                         {/* 👇 드롭다운 영역: toggleFolder 이벤트 연결! */}
@@ -649,6 +675,7 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
               onDelete={() => handleDeletePost(activePost.id)}
               currentUser={user}
               db={db}
+              mediumCats={mediumCats}
             />
           )}
         </main>
@@ -690,6 +717,24 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
         </div>
       )}
       
+      {/* ✅ 폴더 삭제 확인 시네마틱 모달 */}
+      {deleteMediumTargetId && (
+        <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-md z-[130] flex items-center justify-center animate-fast-fade p-4">
+          <div className="bg-white/60 backdrop-blur-2xl rounded-3xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] p-8 w-full max-w-[380px] flex flex-col relative text-center animate-scale-up">
+            <div className="absolute -top-24 -right-24 w-48 h-48 bg-red-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-5 shadow-sm border border-red-100/50 backdrop-blur-sm relative z-10">
+              <Trash2 className="w-7 h-7"/>
+            </div>
+            <h3 className="text-xl font-bold text-gray-800 mb-2 relative z-10 tracking-tight">폴더 삭제</h3>
+            <p className="text-sm text-gray-500 mb-8 relative z-10 font-medium leading-relaxed">이 폴더를 정말 삭제하시겠습니까?<br/>내부의 게시글은 '미분류'로 이동됩니다.</p>
+            <div className="flex space-x-3 relative z-10">
+              <button type="button" onClick={() => setDeleteMediumTargetId(null)} className="flex-1 bg-white/70 backdrop-blur-sm text-gray-600 text-sm font-bold py-3.5 rounded-2xl hover:bg-white transition-colors border border-white/60 shadow-sm">취소</button>
+              <button type="button" onClick={executeDeleteMedium} className="flex-1 bg-red-500/90 backdrop-blur-sm text-white text-sm font-bold py-3.5 rounded-2xl hover:bg-red-600 transition-colors shadow-md border border-red-500 hover:shadow-lg">삭제</button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* ✅ 생성/수정/글쓰기 모달 */}
       {showModal.type && (
         <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-md z-[120] flex items-center justify-center animate-fast-fade p-4">
@@ -697,11 +742,11 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
             <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
             <div className="flex items-center mb-6 relative z-10">
               <div className="w-12 h-12 bg-white/80 text-gray-700 rounded-2xl flex items-center justify-center mr-4 shadow-sm border border-white/50 backdrop-blur-sm">
-                {showModal.type === 'large' || showModal.type === 'edit_large' ? <LayoutDashboard className="w-6 h-6"/> : showModal.type === 'medium' ? <Folder className="w-6 h-6"/> : <FileText className="w-6 h-6"/>}
+                {showModal.type === 'large' || showModal.type === 'edit_large' ? <LayoutDashboard className="w-6 h-6"/> : showModal.type === 'medium' || showModal.type === 'edit_medium' ? <Folder className="w-6 h-6"/> : <FileText className="w-6 h-6"/>}
               </div>
               <div>
                 <h3 className="text-xl font-bold text-gray-800 tracking-tight">
-                  {showModal.type === 'large' ? '새 보드 생성' : showModal.type === 'edit_large' ? '보드 이름 수정' : showModal.type === 'medium' ? '새 폴더 생성' : '새 게시글 작성'}
+                  {showModal.type === 'large' ? '새 보드 생성' : showModal.type === 'edit_large' ? '보드 이름 수정' : showModal.type === 'medium' ? '새 폴더 생성' : showModal.type === 'edit_medium' ? '폴더 이름 수정' : '새 게시글 작성'}
                 </h3>
                 <p className="text-xs text-gray-500 mt-1 font-medium">분류 및 정보를 입력해 주세요.</p>
               </div>
@@ -810,9 +855,15 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
 };
 
   // --- 서브 컴포넌트: 게시글 읽기 및 플로팅 에디터 ---
-  const PostEditorViewer = ({ post, isEditing, setIsEditing, onClose, onDelete, currentUser, db }) => {
+  const PostEditorViewer = ({ post, isEditing, setIsEditing, onClose, onDelete, currentUser, db, mediumCats }) => {
   const contentRef = useRef(null);
   const [localTitle, setLocalTitle] = useState(post.title);
+  const [localMediumId, setLocalMediumId] = useState(post.mediumId || 'Uncategorized');
+  const [isFolderDropdownOpen, setIsFolderDropdownOpen] = useState(false);
+  const isAuthor = currentUser?.role !== 'viewer' && (currentUser?.id === post.authorId || currentUser?.email === post.authorId);
+
+  // ✅ [추가됨] 폰트, 색상 등 드롭다운 메뉴가 열려있는지 기억하는 상태값
+  const [activeMenu, setActiveMenu] = useState(null);
 
   // ✅ [시네마틱 뷰어 1] 클릭한 이미지의 URL을 담는 상태 및 ESC 키로 닫는 이벤트 추가
   const [viewingImage, setViewingImage] = useState(null);
@@ -824,14 +875,11 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   }, [viewingImage]);
   const isAuthor = currentUser?.role !== 'viewer' && (currentUser?.id === post.authorId || currentUser?.email === post.authorId);
 
-  // ✅ [추가됨] 폰트, 색상 등 드롭다운 메뉴가 열려있는지 기억하는 상태값
-  const [activeMenu, setActiveMenu] = useState(null);
-
   // ✅ [이미지 업로드 1] 로딩 상태와 파일 선택기(ref) 추가
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
-// ✅ [이미지 업로드 2] 다중 선택 시 사진 비율에 맞춰 잘리지 않고 동일한 높이로 정렬하는 스마트 함수
+  // ✅ [이미지 업로드 2] 다중 선택 시 사진 비율에 맞춰 잘리지 않고 동일한 높이로 정렬하는 스마트 함수
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
@@ -920,7 +968,7 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   const handleSave = async () => {
     if (!isAuthor) return;
     const finalContent = contentRef.current ? contentRef.current.innerHTML : post.content;
-    await updateDoc(doc(db, 'boardPosts', post.id), { title: localTitle, content: finalContent, updatedAt: serverTimestamp() });
+    await updateDoc(doc(db, 'boardPosts', post.id), { title: localTitle, content: finalContent, mediumId: localMediumId, updatedAt: serverTimestamp() });
     setIsEditing(false);
   };
 
@@ -936,10 +984,43 @@ return (
           
           {/* 시네마틱 헤더 */}
           <div className="h-16 px-6 flex justify-between items-center bg-gray-50/80 backdrop-blur-md border-b border-gray-200 shrink-0 rounded-t-3xl relative z-10">
-            <button onClick={onClose} className="flex items-center text-gray-500 hover:text-gray-900 font-semibold transition-colors group px-2 py-1.5 rounded-xl hover:bg-gray-200/50">
-              <ChevronLeft className="w-5 h-5 mr-1 transition-transform group-hover:-translate-x-1"/> 
-              <span className="text-sm">목록으로</span>
-            </button>
+            <div className="flex items-center space-x-4">
+              <button onClick={onClose} className="flex items-center text-gray-500 hover:text-gray-900 font-semibold transition-colors group px-2 py-1.5 rounded-xl hover:bg-gray-200/50">
+                <ChevronLeft className="w-5 h-5 mr-1 transition-transform group-hover:-translate-x-1"/> 
+                <span className="text-sm">목록으로</span>
+              </button>
+              
+              {/* ✅ 게시글 폴더(카테고리) 이동 드롭다운 */}
+              {isEditing ? (
+                <div className="relative">
+                  {isFolderDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsFolderDropdownOpen(false)}></div>}
+                  <button onClick={() => setIsFolderDropdownOpen(!isFolderDropdownOpen)} className="flex items-center space-x-2 bg-white border border-gray-200 px-3 py-1.5 rounded-lg text-xs font-bold text-blue-600 hover:bg-gray-50 transition-colors shadow-sm relative z-50">
+                    <Folder className="w-3.5 h-3.5" />
+                    <span className="max-w-[100px] truncate">{mediumCats.find(c => c.id === localMediumId)?.name || '미분류'}</span>
+                    <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                  </button>
+                  {isFolderDropdownOpen && (
+                    <div className="absolute top-full mt-1 left-0 w-48 bg-white border border-gray-100 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] py-1.5 z-50 animate-fast-fade">
+                      <div className="max-h-48 overflow-y-auto no-scrollbar">
+                        <div onClick={() => { setLocalMediumId('Uncategorized'); setIsFolderDropdownOpen(false); }} className={`px-4 py-2.5 text-xs cursor-pointer transition-colors flex items-center space-x-2 ${localMediumId === 'Uncategorized' ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-50 font-medium'}`}>
+                          <Folder className="w-3.5 h-3.5 text-gray-400" /><span className="truncate">미분류</span>
+                        </div>
+                        {mediumCats.map(cat => (
+                          <div key={cat.id} onClick={() => { setLocalMediumId(cat.id); setIsFolderDropdownOpen(false); }} className={`px-4 py-2.5 text-xs cursor-pointer transition-colors flex items-center space-x-2 ${localMediumId === cat.id ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-50 font-medium'}`}>
+                            <Folder className={`w-3.5 h-3.5 ${localMediumId === cat.id ? 'text-blue-500' : 'text-gray-400'}`} /><span className="truncate">{cat.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center space-x-1.5 text-xs font-bold text-blue-500 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100/50">
+                  <Folder className="w-3.5 h-3.5" />
+                  <span>{mediumCats.find(c => c.id === post.mediumId)?.name || '미분류'}</span>
+                </div>
+              )}
+            </div>
 
             <div className="flex items-center space-x-3">
               {isAuthor && !isEditing && (
