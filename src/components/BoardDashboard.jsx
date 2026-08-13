@@ -822,9 +822,8 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
-  // ✅ [이미지 업로드 2] 다중 선택 시 네이버 블로그처럼 갤러리 형태로 나란히 배치하는 함수
+// ✅ [이미지 업로드 2] 다중 선택 시 사진 비율에 맞춰 잘리지 않고 동일한 높이로 정렬하는 스마트 함수
   const handleImageUpload = async (e) => {
-    // 선택된 여러 파일들을 배열(Array) 형태로 모두 가져옵니다.
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
@@ -833,37 +832,51 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
 
     const isMultiple = files.length > 1;
 
-    // 1. 각 파일마다 고유 임시 ID와 로컬 미리보기 주소 만들기
-    const tempImages = files.map(file => ({
-      file,
-      id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      localUrl: URL.createObjectURL(file)
-    }));
+    // 1. 사진을 화면에 넣기 전, 각 사진의 가로/세로 비율(Ratio)을 미리 계산하는 헬퍼 함수
+    const getImageRatioAndUrl = (file) => new Promise((resolve) => {
+      const localUrl = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        resolve({
+          file,
+          id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          localUrl,
+          ratio: img.naturalWidth / img.naturalHeight // 핵심: 가로가 길수록 이 값이 커집니다.
+        });
+      };
+      img.src = localUrl;
+    });
 
-    // 2. 에디터에 삽입할 HTML 조립 (여러 장이면 Flexbox로 나란히, 한 장이면 기존처럼)
+    // 2. 선택된 모든 이미지의 원본 비율 계산을 완료할 때까지 기다립니다.
+    const tempImages = await Promise.all(files.map(getImageRatioAndUrl));
+
+    // 3. 에디터에 삽입할 HTML 조립
     let imgHtml = '';
     if (isMultiple) {
       imgHtml = `<div style="display: flex; flex-direction: row; gap: 8px; margin: 10px 0; width: 100%;">`;
       tempImages.forEach(img => {
-        imgHtml += `<div style="flex: 1; min-width: 0; display: flex; flex-direction: column;"><img id="${img.id}" src="${img.localUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px; opacity: 0.5; transition: opacity 0.3s ease-in-out;" alt="업로드 중..." /></div>`;
+        // CSS 마법: flex: <비율> 1 0%; 를 주면 빈 공간을 비율대로 나누어 가지므로 결국 всех 높이가 완벽하게 똑같아집니다.
+        imgHtml += `<div style="flex: ${img.ratio} 1 0%; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
+          <img id="${img.id}" src="${img.localUrl}" style="width: 100%; height: auto; display: block; border-radius: 8px; opacity: 0.5; transition: opacity 0.3s ease-in-out;" alt="업로드 중..." />
+        </div>`;
       });
-      imgHtml += `</div><p><br></p>`; // 갤러리 아래에 자연스럽게 글을 쓸 수 있게 빈 줄 추가
+      imgHtml += `</div><p><br></p>`;
     } else {
-      imgHtml = `<img id="${tempImages[0].id}" src="${tempImages[0].localUrl}" style="max-width: 100%; border-radius: 8px; margin: 10px 0; opacity: 0.5; transition: opacity 0.3s ease-in-out;" alt="업로드 중..." /><p><br></p>`;
+      imgHtml = `<img id="${tempImages[0].id}" src="${tempImages[0].localUrl}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0; opacity: 0.5; transition: opacity 0.3s ease-in-out;" alt="업로드 중..." /><p><br></p>`;
     }
 
-    // 3. 에디터에 즉시 반투명한 미리보기 이미지 묶음 삽입 (체감 속도 0초)
+    // 4. 에디터에 즉시 반투명한 미리보기 이미지 묶음 삽입 (체감 속도 0초)
     document.execCommand('insertHTML', false, imgHtml);
 
     try {
-      // 4. 모든 사진을 백그라운드에서 동시에 파이어베이스로 병렬 업로드 (속도 극대화)
+      // 5. 모든 사진을 백그라운드에서 동시에 파이어베이스로 병렬 업로드
       await Promise.all(tempImages.map(async (img) => {
         const fileName = `board_images/${Date.now()}_${img.file.name}`;
         const imageRef = ref(storage, fileName);
         await uploadBytes(imageRef, img.file);
         const imageUrl = await getDownloadURL(imageRef);
 
-        // 5. 업로드가 완료된 사진부터 즉시 URL을 교체하고 선명하게 투명도 복구
+        // 6. 업로드가 완료된 사진부터 즉시 URL을 교체하고 선명하게 복구
         const uploadedImg = contentRef.current.querySelector(`#${img.id}`);
         if (uploadedImg) {
           uploadedImg.src = imageUrl;
@@ -874,7 +887,6 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
     } catch (error) {
       console.error("다중 이미지 업로드 실패:", error);
       alert("일부 이미지 업로드에 실패했습니다. 다시 시도해 주세요.");
-      // 실패 시 에디터에 띄워둔 반투명 임시 이미지 정리
       tempImages.forEach(img => {
         const failedImg = contentRef.current.querySelector(`#${img.id}`);
         if (failedImg) {
@@ -884,7 +896,7 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
       });
     } finally {
       setIsUploading(false);
-      tempImages.forEach(img => URL.revokeObjectURL(img.localUrl)); // 메모리 누수 방지 청소
+      tempImages.forEach(img => URL.revokeObjectURL(img.localUrl)); // 메모리 청소
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
