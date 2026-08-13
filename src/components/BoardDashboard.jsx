@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Folder, FileText, Plus, Search, ChevronRight, LayoutDashboard, 
-  LogOut, Power, Bold, Italic, Underline, Trash2, Edit3, X, ChevronDown, Save, Users, Menu, ChevronLeft, Type, Palette, Minus, AlertCircle, ImagePlus
+  LogOut, Power, Bold, Italic, Underline, Trash2, Edit3, X, ChevronDown, Save, Users, Menu, ChevronLeft, Type, Palette, Minus, AlertCircle, ImagePlus, Share2
 } from 'lucide-react';
-import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, query, where, serverTimestamp } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, query, where, serverTimestamp, getDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from '../firebaseConfig'; // 🔥 경로 확인
 import { SidebarFavorites } from './SidebarFavorites';
@@ -61,6 +61,30 @@ export const BoardDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
     }
   }, [showModal, mediumCats]);
   
+  // ✅ [공유 기능 3] URL을 분석하여 공유된 게시글 ID가 있으면 자동으로 화면에 띄워줍니다.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const targetPostId = params.get('boardPost');
+    const targetLargeId = params.get('largeId');
+
+    if (targetPostId && targetLargeId) {
+      setActiveLargeId(targetLargeId);
+      setViewState('detail');
+      
+      // DB에서 직접 해당 게시글 문서를 가져와 화면에 세팅합니다.
+      getDoc(doc(db, 'boardPosts', targetPostId)).then(snap => {
+        if (snap.exists()) {
+          setActivePost({ id: snap.id, ...snap.data() });
+          // 링크 복원이 끝났으므로 URL에서 파라미터를 지워줍니다. (새로고침 무한반복 방지)
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } else {
+          alert("삭제되었거나 존재하지 않는 게시글입니다.");
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }).catch(err => console.error("공유된 게시글 로드 실패:", err));
+    }
+  }, []);
+
   // --- 데이터 구독 ---
   useEffect(() => {
     if (!user) return;
@@ -1060,8 +1084,24 @@ return (
             </div>
 
             <div className="flex items-center space-x-3">
+              {/* ✅ [공유 기능 4] 1클릭 복사 기능이 들어간 링크 공유 버튼 추가 */}
+              {!isEditing && (
+                <button 
+                  onClick={() => {
+                    const shareUrl = `${window.location.origin}?boardPost=${post.id}&largeId=${post.largeId}`;
+                    navigator.clipboard.writeText(shareUrl).then(() => {
+                      alert("게시글 공유 링크가 클립보드에 복사되었습니다!\n(로그인이 없어도 게스트 모드로 열람 가능합니다.)");
+                    });
+                  }} 
+                  className="text-gray-500 hover:text-green-600 text-sm font-semibold flex items-center transition-colors"
+                >
+                  <Share2 className="w-4 h-4 mr-1.5"/> 링크 복사
+                </button>
+              )}
+
               {isAuthor && !isEditing && (
                 <>
+                  <div className="w-px h-3 bg-gray-300 mx-1"></div>
                   <button onClick={() => setIsEditing(true)} className="text-gray-500 hover:text-blue-600 text-sm font-semibold flex items-center"><Edit3 className="w-4 h-4 mr-1"/> 편집</button>
                   <button onClick={onDelete} className="text-gray-400 hover:text-red-500 text-sm font-semibold flex items-center"><Trash2 className="w-4 h-4 mr-1"/> 삭제</button>
                 </>
