@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Server, Calendar, User, Kanban, Plus, Minus, KeyRound, ChevronRight, StickyNote, LayoutDashboard } from 'lucide-react';
+import { Server, Calendar, User, Kanban, Plus, Minus, KeyRound, ChevronRight, StickyNote, LayoutDashboard, X } from 'lucide-react';
 import { doc, onSnapshot, setDoc, collection } from 'firebase/firestore';
 
 export const SidebarFavorites = ({ db, user, onNavigate, sidebarOpen, currentModule }) => {
@@ -52,6 +52,20 @@ export const SidebarFavorites = ({ db, user, onNavigate, sidebarOpen, currentMod
     if (!user || userDocId === 'anonymous_user' || !db) return;
     try { await setDoc(doc(db, 'user_preferences', userDocId), { favorites: newFavs }, { merge: true }); } 
     catch (error) { console.error("즐겨찾기 서버 저장 실패:", error); }
+  };
+
+  // ✨ [추가] 프로젝트(에픽) 즐겨찾기 개별 삭제 함수
+  const removeFavoriteEpic = async (e, targetId) => {
+    e.stopPropagation(); // 삭제 버튼 클릭 시 프로젝트 화면으로 넘어가버리는 현상 방지
+    const updatedEpics = favoriteEpics.filter(id => id !== targetId);
+    setFavoriteEpics(updatedEpics); // 화면에서 즉시 제거 (Optimistic UI)
+    
+    if (!user || userDocId === 'anonymous_user' || !db) return;
+    try {
+      await setDoc(doc(db, 'user_preferences', userDocId), { favorite_epics: updatedEpics }, { merge: true });
+    } catch (error) {
+      console.error("에픽 즐겨찾기 삭제 실패:", error);
+    }
   };
 
   useEffect(() => {
@@ -132,13 +146,25 @@ export const SidebarFavorites = ({ db, user, onNavigate, sidebarOpen, currentMod
                         const epicData = allEpics.find(e => e.id === epicIdOrKey || e.epicKey === epicIdOrKey);
                         if (!epicData) return null;
                         return (
-                          <button key={epicIdOrKey} onClick={() => openSpecificEpic(epicData.id)} className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-blue-50/80 text-left transition-colors group">
-                            <div className="flex flex-col min-w-0 pr-2">
+                          <div key={epicIdOrKey} onClick={() => openSpecificEpic(epicData.id)} className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-blue-50/80 transition-colors group cursor-pointer relative">
+                            <div className="flex flex-col min-w-0 pr-2 flex-1">
                               <span className="text-[10px] text-gray-400 font-bold mb-0.5">{epicData.epicKey}</span>
                               <span className="text-sm font-semibold text-gray-700 truncate group-hover:text-blue-700">{epicData.name}</span>
                             </div>
-                            <ChevronRight className="w-3 h-3 text-gray-300 group-hover:text-blue-500 shrink-0" />
-                          </button>
+                            <div className="flex items-center shrink-0 pl-2">
+                              {/* 평소에는 화살표 표시 */}
+                              <ChevronRight className="w-3 h-3 text-gray-300 group-hover:hidden" />
+                              
+                              {/* 마우스를 올렸을 때(hover) 나타나는 삭제(X) 버튼 */}
+                              <button 
+                                onClick={(e) => removeFavoriteEpic(e, epicIdOrKey)} 
+                                className="hidden group-hover:flex items-center justify-center p-1.5 text-gray-400 hover:text-white hover:bg-red-500 rounded-md transition-colors"
+                                title="즐겨찾기에서 제거"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
                         );
                       })}
                     </div>
