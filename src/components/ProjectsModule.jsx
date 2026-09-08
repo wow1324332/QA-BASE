@@ -759,7 +759,8 @@ const hasFilters = filterStatus !== 'All' || filterPriority !== 'All' || filterR
                     >
                       <div className="flex items-center overflow-hidden">
                         <Kanban className={`w-4 h-4 mr-3 shrink-0 ${isSpaceActive ? 'text-gray-700' : 'text-gray-400'}`} />
-                        <span className="text-sm truncate">{space.epicKey}</span>
+                        {/* ✅ 여기서 space.epicKey를 space.name으로 수정했습니다 */}
+                        <span className="text-sm truncate" title={space.name}>{space.name}</span>
                       </div>
                       <ChevronDownIcon className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${isSpaceActive ? 'rotate-180 text-gray-600' : 'text-gray-400'}`} />
                     </button>
