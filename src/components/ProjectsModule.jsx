@@ -333,6 +333,7 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   const [activeEpic, setActiveEpic] = useState(null);
   const [epicViewType, setEpicViewType] = useState('list');
   const [epicStatusFilter, setEpicStatusFilter] = useState('All');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [favoriteEpics, setFavoriteEpics] = useState([]);
   
   const userDocId = user?.email || user?.uid || user?.id || user?.name || 'anonymous_user';
@@ -818,21 +819,40 @@ const hasFilters = filterStatus !== 'All' || filterPriority !== 'All' || filterR
                   </div>
                   <p className="text-sm text-gray-500 font-medium">추적할 프로젝트(에픽)를 선택하거나 새로 등록하세요.</p>
                 </div>
-                 <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm">
-                    <Filter className="w-4 h-4 text-gray-400" />
-                    <select 
-                      value={epicStatusFilter} 
-                      onChange={(e) => setEpicStatusFilter(e.target.value)}
-                      className="bg-transparent border-none outline-none text-sm font-medium text-gray-700 cursor-pointer focus:ring-0"
+                <div className="flex items-center space-x-4">
+                  {/* 👇 커스텀 필터 드롭다운 시작 */}
+                  <div className="relative">
+                    <div 
+                      onClick={() => setIsFilterOpen(!isFilterOpen)}
+                      className="flex items-center space-x-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors"
                     >
-                      <option value="All">상태 전체</option>
-                      <option value="예정">예정</option>
-                      <option value="진행중">진행중</option>
-                      <option value="HOLD">HOLD</option>
-                      <option value="완료">완료</option>
-                    </select>
+                      <Filter className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm font-medium text-gray-700 select-none min-w-[50px] text-center">
+                        {epicStatusFilter === 'All' ? '상태 전체' : epicStatusFilter}
+                      </span>
+                      <ChevronDownIcon className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${isFilterOpen ? 'rotate-180' : ''}`} />
+                    </div>
+                    
+                    {isFilterOpen && (
+                      <>
+                        {/* 배경을 클릭하면 창이 닫히게 하는 투명 방패막 */}
+                        <div className="fixed inset-0 z-40" onClick={() => setIsFilterOpen(false)}></div>
+                        {/* 실제 예쁜 드롭다운 메뉴 */}
+                        <div className="absolute top-full left-0 mt-1.5 w-full min-w-[110px] bg-white/95 backdrop-blur-xl border border-gray-100 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] py-1.5 z-50 animate-fast-fade overflow-hidden">
+                          {[{value: 'All', label: '전체'}, {value: '예정', label: '예정'}, {value: '진행중', label: '진행중'}, {value: 'HOLD', label: 'HOLD'}, {value: '완료', label: '완료'}].map(opt => (
+                            <div 
+                              key={opt.value}
+                              onClick={() => { setEpicStatusFilter(opt.value); setIsFilterOpen(false); }}
+                              className={`px-4 py-2 text-sm cursor-pointer transition-colors ${epicStatusFilter === opt.value ? 'bg-blue-50 text-blue-600 font-bold' : 'text-gray-700 hover:bg-gray-50'}`}
+                            >
+                              {opt.label}
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
+                  {/* 👆 커스텀 필터 드롭다운 끝 */}
                   <div className="bg-white border border-gray-200 rounded-lg p-1 flex shadow-sm">
                     <button onClick={() => setEpicViewType('grid')} className={`p-1.5 rounded-md transition-colors ${epicViewType === 'grid' ? 'bg-gray-100 text-gray-800 shadow-sm font-semibold' : 'text-gray-400 hover:text-gray-600'}`} title="카드 뷰"><Grid className="w-4 h-4" /></button>
                     <button onClick={() => setEpicViewType('list')} className={`p-1.5 rounded-md transition-colors ${epicViewType === 'list' ? 'bg-gray-100 text-gray-800 shadow-sm font-semibold' : 'text-gray-400 hover:text-gray-600'}`} title="리스트 뷰"><List className="w-4 h-4" /></button>
