@@ -332,6 +332,7 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   const [activeSpace, setActiveSpace] = useState(null);
   const [activeEpic, setActiveEpic] = useState(null);
   const [epicViewType, setEpicViewType] = useState('list');
+  const [epicStatusFilter, setEpicStatusFilter] = useState('All');
   const [favoriteEpics, setFavoriteEpics] = useState([]);
   
   const userDocId = user?.email || user?.uid || user?.id || user?.name || 'anonymous_user';
@@ -590,7 +591,11 @@ const [pendingEpicKey, setPendingEpicKey] = useState(null);
     } catch(err) { console.error("Error deleting epic", err); }
   };
 
-  const filteredEpics = epics.filter(e => e.spaceKey === activeSpace);
+  const filteredEpics = epics.filter(epic => {
+    if (epic.spaceKey !== activeSpace) return false;
+    if (epicStatusFilter !== 'All' && epic.status !== epicStatusFilter) return false;
+    return true;
+  });
 
   const totalIssues = issues.length;
   const statusCounts = useMemo(() => issues.reduce((acc, cur) => { acc[cur.status] = (acc[cur.status] || 0) + 1; return acc; }, {}), [issues]);
@@ -813,7 +818,21 @@ const hasFilters = filterStatus !== 'All' || filterPriority !== 'All' || filterR
                   </div>
                   <p className="text-sm text-gray-500 font-medium">추적할 프로젝트(에픽)를 선택하거나 새로 등록하세요.</p>
                 </div>
-                  <div className="flex items-center space-x-4">
+                 <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm">
+                    <Filter className="w-4 h-4 text-gray-400" />
+                    <select 
+                      value={epicStatusFilter} 
+                      onChange={(e) => setEpicStatusFilter(e.target.value)}
+                      className="bg-transparent border-none outline-none text-sm font-medium text-gray-700 cursor-pointer focus:ring-0"
+                    >
+                      <option value="All">상태 전체</option>
+                      <option value="예정">예정</option>
+                      <option value="진행중">진행중</option>
+                      <option value="HOLD">HOLD</option>
+                      <option value="완료">완료</option>
+                    </select>
+                  </div>
                   <div className="bg-white border border-gray-200 rounded-lg p-1 flex shadow-sm">
                     <button onClick={() => setEpicViewType('grid')} className={`p-1.5 rounded-md transition-colors ${epicViewType === 'grid' ? 'bg-gray-100 text-gray-800 shadow-sm font-semibold' : 'text-gray-400 hover:text-gray-600'}`} title="카드 뷰"><Grid className="w-4 h-4" /></button>
                     <button onClick={() => setEpicViewType('list')} className={`p-1.5 rounded-md transition-colors ${epicViewType === 'list' ? 'bg-gray-100 text-gray-800 shadow-sm font-semibold' : 'text-gray-400 hover:text-gray-600'}`} title="리스트 뷰"><List className="w-4 h-4" /></button>
