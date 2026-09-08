@@ -331,16 +331,9 @@ export const ProjectsDashboard = ({ user, onNavigate, onLogout, onQuit }) => {
   
   const [activeSpace, setActiveSpace] = useState(null);
   const [activeEpic, setActiveEpic] = useState(null);
-
-  const [activeSpace, setActiveSpace] = useState(null);
-  const [activeEpic, setActiveEpic] = useState(null);
-
-  // [추가] 에픽 보드의 뷰 타입 (리스트 뷰 기본값)
   const [epicViewType, setEpicViewType] = useState('list');
-
   const [favoriteEpics, setFavoriteEpics] = useState([]);
-
-  const [favoriteEpics, setFavoriteEpics] = useState([]);
+  
   const userDocId = user?.email || user?.uid || user?.id || user?.name || 'anonymous_user';
 
   // 하트(에픽 즐겨찾기) 토글 함수
