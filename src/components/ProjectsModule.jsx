@@ -738,14 +738,55 @@ const hasFilters = filterStatus !== 'All' || filterPriority !== 'All' || filterR
         <aside className={`bg-white/60 backdrop-blur-xl rounded-r-2xl shadow-[-5px_0_30px_rgba(0,0,0,0.02)] transition-all duration-300 ease-in-out flex flex-col justify-between z-10 overflow-hidden whitespace-nowrap ${sidebarOpen ? 'w-64' : 'w-0'}`}>
           
           {/* 상단 메인 메뉴 */}
-          <div className="p-4 space-y-1 w-64">
+          <div className="p-4 space-y-1 w-64 flex-1 overflow-y-auto no-scrollbar">
             <div className="text-xs font-semibold text-gray-400 tracking-wider mb-4 px-3 mt-2">MENU</div>
             <button onClick={() => onNavigate('board')} className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors"><LayoutDashboard className="w-4 h-4" /><span className="text-sm font-medium">Functional Board</span></button>
             <div className="h-px bg-gray-100 my-2 mx-3"></div>
-            <button onClick={() => { setActiveMenu('space'); setView('spaces'); setActiveSpace(null); setActiveEpic(null); }} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ${activeMenu === 'space' ? 'bg-blue-50/50 text-blue-700 font-medium border border-blue-100 shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}><Server className={`w-4 h-4 ${activeMenu === 'space' ? 'text-blue-600' : ''}`} /><span className="text-sm">Space Board</span></button>
-            {activeSpace && (
-              <button onClick={() => { setActiveMenu('epic'); setView('epics'); }} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ml-2 w-[calc(100%-8px)] ${activeMenu === 'epic' ? 'bg-gray-50 text-gray-900 font-medium border border-gray-200 shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}><Kanban className="w-4 h-4" /><span className="text-sm">Project Board</span></button>
-            )}
+            <button onClick={() => { setActiveMenu('space'); setView('spaces'); setActiveSpace(null); setActiveEpic(null); }} className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors ${activeMenu === 'space' && view === 'spaces' ? 'bg-blue-50/50 text-blue-700 font-medium border border-blue-100 shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}><Server className={`w-4 h-4 ${activeMenu === 'space' && view === 'spaces' ? 'text-blue-600' : ''}`} /><span className="text-sm">Space Board</span></button>
+            
+            {/* 👇 여기서부터 스페이스-프로젝트 계층형 폴더 트리 */}
+            <div className="pt-2 space-y-1">
+              {spaces.map(space => {
+                const isSpaceActive = activeSpace === space.epicKey;
+                const spaceEpics = epics.filter(e => e.spaceKey === space.epicKey);
+
+                return (
+                  <div key={space.id} className="mb-1">
+                    {/* 1단계: 스페이스명 (부모 폴더) */}
+                    <button 
+                      onClick={() => { setActiveSpace(space.epicKey); setView('epics'); setActiveMenu('epic'); }} 
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-colors ${isSpaceActive ? 'bg-white text-gray-900 font-bold border border-gray-200 shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}
+                    >
+                      <div className="flex items-center overflow-hidden">
+                        <Kanban className={`w-4 h-4 mr-3 shrink-0 ${isSpaceActive ? 'text-gray-700' : 'text-gray-400'}`} />
+                        <span className="text-sm truncate">{space.epicKey}</span>
+                      </div>
+                      <ChevronDownIcon className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${isSpaceActive ? 'rotate-180 text-gray-600' : 'text-gray-400'}`} />
+                    </button>
+
+                    {/* 2단계: 프로젝트명 (자식 폴더 트리) - 해당 스페이스가 선택되었을 때만 펼쳐짐 */}
+                    {isSpaceActive && spaceEpics.length > 0 && (
+                      <div className="mt-1.5 ml-4 pl-3 border-l-2 border-gray-100 space-y-1 animate-fast-fade overflow-hidden">
+                        {spaceEpics.map(epic => {
+                          const isEpicActive = activeEpic === epic.epicKey && view === 'issues';
+                          return (
+                            <button
+                              key={epic.id}
+                              onClick={() => { setActiveEpic(epic.epicKey); setView('issues'); setActiveMenu('epic'); }}
+                              className={`w-full flex items-center px-3 py-2 rounded-lg text-xs transition-colors group ${isEpicActive ? 'bg-blue-50 text-blue-700 font-bold shadow-inner' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'}`}
+                              title={epic.name}
+                            >
+                              <div className={`w-1.5 h-1.5 rounded-full mr-2.5 shrink-0 transition-all ${epic.status === '완료' ? 'bg-green-400' : epic.status === '진행중' ? 'bg-blue-400' : 'bg-gray-300'}`}></div>
+                              <span className="truncate group-hover:translate-x-0.5 transition-transform">{epic.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
           {/* 하단 퀵링크 (즐겨찾기) 공통 컴포넌트 적용 */}
           <SidebarFavorites 
